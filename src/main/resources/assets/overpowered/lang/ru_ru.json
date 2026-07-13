@@ -1,3 +1,10 @@
 {
-  "itemGroup.overpowered": "Overpowered"
+  "itemGroup.overpowered": "Overpowered",
+  "item.overpowered.plasma_blaster": "Плазменный бластер",
+  "subtitles.overpowered.plasma_blaster.shoot": "Выстрел плазменного бластера",
+  "subtitles.overpowered.plasma_blaster.reload": "Перезарядка плазменного бластера",
+  "subtitles.overpowered.heavy_blaster.shoot": "Выстрел тяжёлого бластера",
+  "subtitles.overpowered.impact.metal": "Попадание плазмы",
+  "subtitles.overpowered.magic.forcefield": "Гул силового поля",
+  "subtitles.overpowered.magic.explosion": "Магический взрыв"
 }

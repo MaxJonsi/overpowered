@@ -1,0 +1,50 @@
+{
+  "plasma_blaster.shoot": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.plasma_blaster.shoot",
+    "sounds": [
+      "overpowered:weapon/plasma_shot_0",
+      "overpowered:weapon/plasma_shot_1",
+      "overpowered:weapon/plasma_shot_2"
+    ]
+  },
+  "plasma_blaster.reload_start": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.plasma_blaster.reload",
+    "sounds": ["overpowered:weapon/reload_start"]
+  },
+  "plasma_blaster.reload_end": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.plasma_blaster.reload",
+    "sounds": ["overpowered:weapon/reload_end"]
+  },
+  "heavy_blaster.shoot": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.heavy_blaster.shoot",
+    "sounds": [
+      "overpowered:weapon/heavy_shot_0",
+      "overpowered:weapon/heavy_shot_1"
+    ]
+  },
+  "impact.metal": {
+    "category": "neutral",
+    "subtitle": "subtitles.overpowered.impact.metal",
+    "sounds": [
+      "overpowered:weapon/impact_metal_0",
+      "overpowered:weapon/impact_metal_1"
+    ]
+  },
+  "magic.forcefield": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.magic.forcefield",
+    "sounds": [
+      "overpowered:magic/forcefield_0",
+      "overpowered:magic/forcefield_1"
+    ]
+  },
+  "magic.explosion": {
+    "category": "neutral",
+    "subtitle": "subtitles.overpowered.magic.explosion",
+    "sounds": ["overpowered:magic/explosion_0"]
+  }
+}

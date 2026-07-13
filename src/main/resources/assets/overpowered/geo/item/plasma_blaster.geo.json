@@ -1,0 +1,65 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.overpowered.plasma_blaster",
+				"texture_width": 64,
+				"texture_height": 64,
+				"visible_bounds_width": 3,
+				"visible_bounds_height": 3,
+				"visible_bounds_offset": [0, 0.5, 0]
+			},
+			"bones": [
+				{
+					"name": "root",
+					"pivot": [0, 0, 0]
+				},
+				{
+					"name": "body",
+					"parent": "root",
+					"pivot": [0, 3, 0],
+					"cubes": [
+						{"origin": [-1, 2, -5], "size": [2, 3, 10], "uv": [0, 0]},
+						{"origin": [-1, 1, 5], "size": [2, 4, 3], "uv": [0, 24]},
+						{"origin": [-0.5, 1, 0], "size": [1, 1, 3], "uv": [44, 6]}
+					]
+				},
+				{
+					"name": "barrel",
+					"parent": "body",
+					"pivot": [0, 4, -5],
+					"cubes": [
+						{"origin": [-0.5, 3, -11], "size": [1, 2, 6], "uv": [0, 14]},
+						{"origin": [-1, 2.5, -13], "size": [2, 3, 2], "uv": [24, 0]}
+					]
+				},
+				{
+					"name": "energy_cell",
+					"parent": "body",
+					"pivot": [0, 5, -0.5],
+					"cubes": [
+						{"origin": [-1.5, 4, -2], "size": [3, 2, 3], "uv": [32, 0]}
+					]
+				},
+				{
+					"name": "sight",
+					"parent": "body",
+					"pivot": [0, 5, -2.5],
+					"cubes": [
+						{"origin": [-0.5, 5, -4], "size": [1, 1, 3], "uv": [44, 0]}
+					]
+				},
+				{
+					"name": "grip",
+					"parent": "body",
+					"pivot": [0, 2, 4],
+					"rotation": [-15, 0, 0],
+					"cubes": [
+						{"origin": [-1, -3, 3], "size": [2, 5, 3], "uv": [16, 14]}
+					]
+				}
+			]
+		}
+	]
+}

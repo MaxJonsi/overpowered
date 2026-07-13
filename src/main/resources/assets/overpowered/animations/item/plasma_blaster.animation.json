@@ -1,0 +1,90 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.overpowered.plasma_blaster.idle": {
+			"loop": true,
+			"animation_length": 4,
+			"bones": {
+				"energy_cell": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"2.0": [0, 180, 0],
+						"4.0": [0, 360, 0]
+					}
+				},
+				"root": {
+					"position": {
+						"0.0": [0, 0, 0],
+						"2.0": [0, 0.3, 0],
+						"4.0": [0, 0, 0]
+					}
+				}
+			}
+		},
+		"animation.overpowered.plasma_blaster.shoot": {
+			"loop": false,
+			"animation_length": 0.35,
+			"bones": {
+				"root": {
+					"rotation": {
+						"0.0": {"vector": [0, 0, 0]},
+						"0.05": {"vector": [-9, 0, 0], "easing": "easeOutQuad"},
+						"0.35": {"vector": [0, 0, 0], "easing": "easeOutElastic"}
+					},
+					"position": {
+						"0.0": {"vector": [0, 0, 0]},
+						"0.05": {"vector": [0, 0.5, 1.5], "easing": "easeOutQuad"},
+						"0.35": {"vector": [0, 0, 0], "easing": "easeOutCubic"}
+					}
+				},
+				"barrel": {
+					"scale": {
+						"0.0": [1, 1, 1],
+						"0.05": [1.15, 1.15, 1],
+						"0.2": [1, 1, 1]
+					}
+				},
+				"energy_cell": {
+					"scale": {
+						"0.0": [1, 1, 1],
+						"0.05": [1.3, 1.3, 1.3],
+						"0.25": [1, 1, 1]
+					}
+				}
+			},
+			"sound_effects": {
+				"0.0": {"effect": "plasma_blaster_shoot"}
+			}
+		},
+		"animation.overpowered.plasma_blaster.reload": {
+			"loop": false,
+			"animation_length": 1.6,
+			"bones": {
+				"root": {
+					"rotation": {
+						"0.0": {"vector": [0, 0, 0]},
+						"0.4": {"vector": [25, 0, -10], "easing": "easeOutCubic"},
+						"1.2": {"vector": [25, 0, -10]},
+						"1.6": {"vector": [0, 0, 0], "easing": "easeOutBack"}
+					}
+				},
+				"energy_cell": {
+					"position": {
+						"0.0": [0, 0, 0],
+						"0.4": [0, 2.5, 0],
+						"1.2": [0, 2.5, 0],
+						"1.6": [0, 0, 0]
+					},
+					"rotation": {
+						"0.4": [0, 0, 0],
+						"1.2": [0, 1080, 0]
+					}
+				}
+			},
+			"sound_effects": {
+				"0.1": {"effect": "plasma_blaster_reload_start"},
+				"1.5": {"effect": "plasma_blaster_reload_end"}
+			}
+		}
+	}
+}

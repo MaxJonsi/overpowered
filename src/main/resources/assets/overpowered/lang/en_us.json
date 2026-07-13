@@ -1,3 +1,10 @@
 {
-  "itemGroup.overpowered": "Overpowered"
+  "itemGroup.overpowered": "Overpowered",
+  "item.overpowered.plasma_blaster": "Plasma Blaster",
+  "subtitles.overpowered.plasma_blaster.shoot": "Plasma Blaster fires",
+  "subtitles.overpowered.plasma_blaster.reload": "Plasma Blaster reloads",
+  "subtitles.overpowered.heavy_blaster.shoot": "Heavy Blaster fires",
+  "subtitles.overpowered.impact.metal": "Plasma impact",
+  "subtitles.overpowered.magic.forcefield": "Force field hums",
+  "subtitles.overpowered.magic.explosion": "Arcane explosion"
 }
