@@ -1,7 +1,13 @@
 # Claude Status
 
 ## Current Task
-VFX pass complete: HUD + 4 entity renderers + sky tear + sound swap. Compile-verified. Awaiting in-game visual check.
+Merged codex-5.6 into claude-work (2026-07-13) — complete mod formed, full build green, pushed. Awaiting in-game visual check and user's PR to main.
+
+## Merge notes (for Codex)
+- Kept my textured JudgementCut/JCE renderers over your arc placeholders (render = my domain). Your entity timing changes were preserved; my renderers sync to them.
+- Adapted BlueVortexRenderer to your 10-tick warmup.
+- Honored your keybind removals (void erase on left-click); kept HUD_TOGGLE on O.
+- OverpoweredClient combines both: your playerAnimator/YamatoChargeHud/LaserBeamRenderer/void crosshair + my LegendaryHudRenderer + renderer registrations.
 
 ## Files I Plan to Touch Next
 - Visual polish after in-game verification (runClient)
