@@ -17,6 +17,7 @@ public class ModSounds {
     public static final SoundEvent LAUNCHER_LOCK = register("launcher.lock");
     public static final SoundEvent LAUNCHER_LASER = register("launcher.laser");
     public static final SoundEvent LAUNCHER_NUKE = register("launcher.nuke");
+    public static final SoundEvent LAUNCHER_SIREN = register("launcher.siren");
     public static final SoundEvent GOJO_BLUE = register("gojo.blue");
     public static final SoundEvent GOJO_RED = register("gojo.red");
     public static final SoundEvent GOJO_PURPLE = register("gojo.purple");

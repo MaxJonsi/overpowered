@@ -200,7 +200,7 @@ public class RocketLauncherItem extends Item implements GeoItem {
         }
         serverLevel.sendParticles(ParticleTypes.FLAME, beamEnd.x, beamEnd.y, beamEnd.z, 5, 0.2, 0.2, 0.2, 0.01);
 
-        if (player.tickCount % 18 == 0) {
+        if (player.tickCount % 190 == 0) {
             serverLevel.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_LASER, SoundSource.PLAYERS, 0.8f, 1f);
             triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "laser");
         }

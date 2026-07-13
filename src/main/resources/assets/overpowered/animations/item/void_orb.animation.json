@@ -1,0 +1,16 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.overpowered.void_orb.idle": {
+			"loop": true,
+			"animation_length": 5,
+			"bones": {
+				"orb": {
+					"rotation": {"0.0": [0, 0, 0], "5.0": [0, 360, 0]},
+					"position": {"0.0": [0, 0, 0], "2.5": [0, 0.9, 0], "5.0": [0, 0, 0]},
+					"scale": {"0.0": [1, 1, 1], "2.5": [1.07, 1.07, 1.07], "5.0": [1, 1, 1]}
+				}
+			}
+		}
+	}
+}

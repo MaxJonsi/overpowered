@@ -1,8 +1,10 @@
 package com.maxjonsi.overpowered.registry;
 
 import com.maxjonsi.overpowered.Overpowered;
+import com.maxjonsi.overpowered.item.GojoMaskItem;
 import com.maxjonsi.overpowered.item.RocketLauncherItem;
 import com.maxjonsi.overpowered.item.SixEyesItem;
+import com.maxjonsi.overpowered.item.VoidOrbItem;
 import com.maxjonsi.overpowered.item.YamatoItem;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -18,6 +20,12 @@ public class ModItems {
 
     public static final SixEyesItem SIX_EYES = register("six_eyes",
             new SixEyesItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
+
+    public static final GojoMaskItem GOJO_MASK = register("gojo_mask",
+            new GojoMaskItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
+
+    public static final VoidOrbItem VOID_ORB = register("void_orb",
+            new VoidOrbItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
 
     private static <T extends Item> T register(String name, T item) {
         return Registry.register(BuiltInRegistries.ITEM, Overpowered.id(name), item);

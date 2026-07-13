@@ -11,10 +11,7 @@
   "yamato.slice": {
     "category": "player",
     "subtitle": "subtitles.overpowered.yamato.slice",
-    "sounds": [
-      "overpowered:weapon/judgement_slice_0",
-      "overpowered:weapon/judgement_slice_1"
-    ]
+    "sounds": ["overpowered:weapon/judgement_cut"]
   },
   "yamato.sheath": {
     "category": "player",
@@ -57,6 +54,11 @@
     "category": "master",
     "subtitle": "subtitles.overpowered.launcher.nuke",
     "sounds": ["overpowered:weapon/nuke_boom"]
+  },
+  "launcher.siren": {
+    "category": "master",
+    "subtitle": "subtitles.overpowered.launcher.siren",
+    "sounds": [{"name": "overpowered:weapon/nuke_siren", "stream": true}]
   },
   "gojo.blue": {
     "category": "player",

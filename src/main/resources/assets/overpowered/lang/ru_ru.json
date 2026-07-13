@@ -45,5 +45,8 @@
   "item.overpowered.plasma_blaster": "Плазменный бластер",
   "subtitles.overpowered.plasma_blaster.shoot": "Выстрел плазменного бластера",
   "subtitles.overpowered.plasma_blaster.reload": "Перезарядка плазменного бластера",
-  "subtitles.overpowered.heavy_blaster.shoot": "Выстрел тяжёлого бластера"
+  "subtitles.overpowered.heavy_blaster.shoot": "Выстрел тяжёлого бластера",
+  "item.overpowered.gojo_mask": "Маска Годжо",
+  "item.overpowered.void_orb": "Сфера Пустоты",
+  "subtitles.overpowered.launcher.siren": "Вой ядерной сирены"
 }

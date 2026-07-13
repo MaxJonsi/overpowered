@@ -2,7 +2,9 @@ package com.maxjonsi.overpowered.entity;
 
 import com.maxjonsi.overpowered.registry.ModSounds;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
+import org.joml.Vector3f;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
@@ -28,6 +30,7 @@ public class NukeEntity extends Entity implements GeoEntity {
     private BlockPos center = BlockPos.ZERO;
     private int layerY;
     private int lingerTicks;
+    private int cloudTicks;
 
     public NukeEntity(EntityType<?> type, Level level) {
         super(type, level);
@@ -40,6 +43,9 @@ public class NukeEntity extends Entity implements GeoEntity {
         if (!(level() instanceof ServerLevel level)) return;
 
         if (!detonated) {
+            if (tickCount == 1) {
+                level.playSound(null, getX(), getY(), getZ(), ModSounds.LAUNCHER_SIREN, SoundSource.MASTER, 12f, 1f);
+            }
             Vec3 next = position().add(0, -0.9, 0);
             BlockPos below = BlockPos.containing(next);
             if (!level.getBlockState(below).isAir() || next.y <= level.getMinBuildHeight() + 1) {
@@ -52,6 +58,8 @@ public class NukeEntity extends Entity implements GeoEntity {
             }
             return;
         }
+
+        cloudTicks++;
 
         destroyLayers(level, 2);
         spawnMushroomCloud(level);
@@ -97,24 +105,39 @@ public class NukeEntity extends Entity implements GeoEntity {
     }
 
     private void spawnMushroomCloud(ServerLevel level) {
-        int age = tickCount % 400;
-        if (age % 2 != 0) return;
-        double stemHeight = Math.min(40, age * 0.8);
-        for (int i = 0; i < 6; i++) {
-            double h = random.nextDouble() * stemHeight;
-            level.sendParticles(ParticleTypes.CAMPFIRE_SIGNAL_SMOKE,
-                    center.getX() + random.nextGaussian() * 2, center.getY() + h, center.getZ() + random.nextGaussian() * 2,
-                    2, 0.5, 0.5, 0.5, 0.01);
-        }
-        double capRadius = Math.min(14, stemHeight * 0.4);
+        if (cloudTicks % 2 != 0) return;
+        double stemHeight = Math.min(46, cloudTicks * 0.9);
+
         for (int i = 0; i < 8; i++) {
+            double h = random.nextDouble() * stemHeight;
+            double r = (2.5 + h * 0.04) * random.nextDouble();
             double angle = random.nextDouble() * Math.PI * 2;
-            double r = capRadius * (0.5 + random.nextDouble() * 0.5);
-            level.sendParticles(ParticleTypes.LARGE_SMOKE,
-                    center.getX() + Math.cos(angle) * r, center.getY() + stemHeight, center.getZ() + Math.sin(angle) * r,
-                    3, 1, 0.5, 1, 0.02);
+            level.sendParticles(new DustParticleOptions(new Vector3f(1f, 0.42f + random.nextFloat() * 0.22f, 0.06f), 3.2f),
+                    center.getX() + Math.cos(angle) * r, center.getY() + h, center.getZ() + Math.sin(angle) * r,
+                    2, 0.6, 0.9, 0.6, 0.01);
         }
-        if (tickCount % 20 == 0) {
+        level.sendParticles(ParticleTypes.FLAME, center.getX(), center.getY() + 1.5, center.getZ(), 5, 1.6, 2.5, 1.6, 0.04);
+
+        double capRadius = Math.min(17, stemHeight * 0.42);
+        for (int i = 0; i < 10; i++) {
+            double angle = random.nextDouble() * Math.PI * 2;
+            double r = capRadius * Math.sqrt(random.nextDouble());
+            level.sendParticles(new DustParticleOptions(new Vector3f(0.36f, 0.37f, 0.4f), 4.5f),
+                    center.getX() + Math.cos(angle) * r, center.getY() + stemHeight + random.nextDouble() * 5,
+                    center.getZ() + Math.sin(angle) * r, 2, 1.2, 0.8, 1.2, 0.01);
+        }
+
+        if (cloudTicks % 8 == 0) {
+            double ringRadius = capRadius * 1.7;
+            double ringHeight = stemHeight * (cloudTicks % 16 == 0 ? 0.45 : 0.85);
+            for (int i = 0; i < 24; i++) {
+                double angle = 2 * Math.PI * i / 24;
+                level.sendParticles(ParticleTypes.CLOUD,
+                        center.getX() + Math.cos(angle) * ringRadius, center.getY() + ringHeight,
+                        center.getZ() + Math.sin(angle) * ringRadius, 1, 0.3, 0.1, 0.3, 0);
+            }
+        }
+        if (cloudTicks % 20 == 0) {
             level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, center.getX(), center.getY() + 2, center.getZ(), 2, 6, 2, 6, 0);
         }
     }

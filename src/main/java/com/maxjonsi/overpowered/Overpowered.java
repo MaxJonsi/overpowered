@@ -42,6 +42,8 @@ public class Overpowered implements ModInitializer {
                     output.accept(ModItems.YAMATO);
                     output.accept(ModItems.ROCKET_LAUNCHER);
                     output.accept(ModItems.SIX_EYES);
+                    output.accept(ModItems.GOJO_MASK);
+                    output.accept(ModItems.VOID_ORB);
                 }).build());
 
         ModNetworking.init();

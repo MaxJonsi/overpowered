@@ -45,5 +45,8 @@
   "item.overpowered.plasma_blaster": "Plasma Blaster",
   "subtitles.overpowered.plasma_blaster.shoot": "Plasma Blaster fires",
   "subtitles.overpowered.plasma_blaster.reload": "Plasma Blaster reloads",
-  "subtitles.overpowered.heavy_blaster.shoot": "Heavy Blaster fires"
+  "subtitles.overpowered.heavy_blaster.shoot": "Heavy Blaster fires",
+  "item.overpowered.gojo_mask": "Gojo's Mask",
+  "item.overpowered.void_orb": "Void Orb",
+  "subtitles.overpowered.launcher.siren": "Nuclear siren wails"
 }
