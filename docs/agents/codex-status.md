@@ -2,33 +2,30 @@
 
 ## Current Task
 
-Finishing the true Claude/Codex integration on `codex-integration-ready`. The previous Claude merge used old commit `9aca9d6`; this work merges actual server commit `2ca01ef` and closes the remaining gameplay/client integration gaps before another test JAR is produced.
+Completed the true Claude/Codex integration and the six final gameplay blocks on `codex-integration-ready`. This branch descends from Claude visual commit `cb925cb` and complete Codex server commit `2ca01ef`.
 
 ## Files I Plan to Touch Next
 
-- `src/main/java/com/maxjonsi/overpowered/server/`
-- `src/main/java/com/maxjonsi/overpowered/item/`
-- `src/main/java/com/maxjonsi/overpowered/network/`
-- `src/main/java/com/maxjonsi/overpowered/client/OverpoweredClient.java`
-- `src/main/java/com/maxjonsi/overpowered/client/ModKeyMappings.java`
-- `src/main/java/com/maxjonsi/overpowered/client/hud/`
-- new client state/presentation classes required by `EnergyStatePayload` and `PowerEventPayload`
-- missing item models/textures and language entries
-- `docs/agents/`
+None for this work block. Future changes should begin with a fresh status update.
 
 ## Completed
 
-- Recovered and verified Claude branch `cb925cb`.
-- Proved its merge used old Codex commit `9aca9d6`, not `2ca01ef`.
-- Created a true temporary integration; resolved five documentation conflicts and two language conflicts.
-- True integration clean build, dedicated-server initialization, and client resource initialization pass.
-- Audit report: `work/reference-audit/true-integration-audit.json`.
+- Recovered Claude branch `cb925cb` and proved its earlier merge used old Codex commit `9aca9d6` rather than `2ca01ef`.
+- Created the real integration at `c04ac55` with both complete parents.
+- Finished bounded DIO Time Rewind, phased Absolute Void, phased Nuclear Apocalypse, Yamato Air Trick/Dimension Rift/Devil Trigger/Final Judgment Cut, and passive Gojo Infinity.
+- Completed Aizen's targeted per-player illusion lifecycle: immediate start, refresh, expiry, perfect state, local distortion, and false caster afterimages.
+- Replaced `MockPowerHudData` with live server-synced energy, exact costs, affordability, active forms, and Infinity Core time remaining.
+- Added direct `Z/X/C/V/B/G` ability inputs and retained `R/H/O` special controls.
+- Added `EnergyStatePayload` and `PowerEventPayload` client receivers while preserving server authority.
+- Added five missing item models and reference-grounded 32x32 textures: DIO knife, Stone Mask, Kyoka Suigetsu, Shadow Dagger, and Infinity Core.
+- Updated README controls and full roster documentation.
+- Verification complete: clean Gradle build, JSON/language/model/texture/sound/network audit, dedicated-server bootstrap, and client resource/render smoke test with zero missing models or fatal markers.
 
 ## Blocked On
 
-- No technical blocker. Infinity Core has no user-supplied visual reference, so its first release asset will follow the existing gold/infinite-energy HUD language unless the user replaces it later.
+Nothing.
 
 ## Notes for Claude
 
-- Do not merge or rebase this work until `codex-integration-ready` is published.
-- Existing Claude renderers and Yamato animations are retained. Codex is now wiring their server contracts and completing uncovered presentation states.
+- `codex-integration-ready` already contains Claude commit `cb925cb`; do not merge the older `5c66be8` integration on top.
+- Any later Claude visual polish should branch/rebase from the final Codex integration commit to retain server commit `2ca01ef` and this completion pass.

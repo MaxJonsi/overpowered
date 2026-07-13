@@ -51,3 +51,15 @@ Claude's merge commit `5c66be8` merged remote Codex commit `9aca9d6`, not the co
 
 ### [2026-07-13] Client authority boundary
 `EnergyStatePayload` feeds display-only HUD state. `PowerEventPayload` feeds presentation-only timed effects. Damage, energy deduction, targets, block changes, movement validity, rewind restoration, and ultimate phases remain server-authoritative.
+
+### [2026-07-14] Final input and HUD contract
+The generic direct-access keys are `Z/X/C/V/B` for slots one through five and `G` for the ultimate. `R` remains weapon special/cycle, `H` remains mark/Dimension Rift, and `O` toggles the HUD. The HUD reads only `EnergyStatePayload` plus presentation-only `PowerEventPayload`; client state never approves an ability.
+
+### [2026-07-14] Gojo Infinity semantics
+Infinity is passive while the Gojo Mask is equipped and Six Eyes is in either hand. Slot three deliberately suppresses or re-enables the passive. Each rejected direct threat costs energy; energy exhaustion suppresses Infinity until explicitly re-enabled.
+
+### [2026-07-14] Aizen illusion isolation
+Normal and Perfect Hypnosis send targeted state packets only to affected players. Observer broadcasts use `detail = 0`; victim packets use `detail = 1` (normal) or `2` (perfect). False caster afterimages and distortion are client presentation only and never create authoritative fake entities.
+
+### [2026-07-14] Missing item art direction
+The five missing inventory sprites use reference-derived Minecraft pixel art. Infinity Core had no supplied object reference, so its approved first-pass direction follows the existing gold infinite-energy language with restrained cyan highlights. Source generation used removable chroma backgrounds; shipped textures are 32x32 transparent PNGs.

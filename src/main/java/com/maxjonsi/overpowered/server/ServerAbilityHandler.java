@@ -105,6 +105,7 @@ public class ServerAbilityHandler {
                 PlayerEnergyManager.forgetClient(handler.player.getUUID());
                 TimeAbilityManager.clearPlayer(server, handler.player.getUUID());
                 AizenAbilityManager.clearPlayer(handler.player.getUUID());
+                GojoAbilityManager.clearPlayer(handler.player.getUUID());
                 ShadowAbilityManager.clearPlayer(server, handler.player.getUUID());
                 NuclearAbilityManager.clearPlayer(handler.player.getUUID());
                 RocketLauncherItem.clearTransientState(handler.player.getUUID());
@@ -210,7 +211,7 @@ public class ServerAbilityHandler {
         } else if (main.getItem() instanceof YamatoItem yamato) {
             switch (slot) {
                 case 1 -> yamato.performJudgementCut(player, main);
-                case 2 -> yamato.dash(player, main);
+                case 2 -> YamatoAbilityManager.airTrick(player);
                 case 3 -> YamatoAbilityManager.dimensionRift(player);
                 case 4 -> YamatoAbilityManager.toggleDevilTrigger(player);
                 case 6 -> YamatoAbilityManager.startFinal(player);

@@ -1,6 +1,11 @@
 package com.maxjonsi.overpowered.client.hud;
 
 import com.maxjonsi.overpowered.item.GojoMaskItem;
+import com.maxjonsi.overpowered.item.InfinityCoreItem;
+import com.maxjonsi.overpowered.item.KyokaSuigetsuItem;
+import com.maxjonsi.overpowered.item.ShadowDaggerItem;
+import com.maxjonsi.overpowered.item.SixEyesItem;
+import com.maxjonsi.overpowered.item.StoneMaskItem;
 import com.maxjonsi.overpowered.item.VoidOrbItem;
 import com.maxjonsi.overpowered.item.YamatoItem;
 import com.maxjonsi.overpowered.item.RocketLauncherItem;
@@ -13,7 +18,7 @@ public enum CharacterTheme {
 
     GOJO("Gojo",
             0xFFAADDFF, 0xFF55AAEE, 0xCC0D1B2A,
-            GojoMaskItem.class),
+            GojoMaskItem.class, SixEyesItem.class),
 
     VOID("Void",
             0xFF666666, 0xFF333333, 0xCC000000,
@@ -21,40 +26,45 @@ public enum CharacterTheme {
 
     DIO("DIO",
             0xFFFFCC33, 0xFFCC9900, 0xCC2A2210,
-            null),
+            StoneMaskItem.class),
 
     AIZEN("Aizen",
             0xFFAA55DD, 0xFF7733AA, 0xCC1A0D2A,
-            null),
+            KyokaSuigetsuItem.class),
 
     SHADOW_MONARCH("Shadow Monarch",
             0xFF8833CC, 0xFF5511AA, 0xCC0D0A1E,
-            null),
+            ShadowDaggerItem.class),
 
     FAT_MAN("Fat Man",
             0xFFFFDD44, 0xFFCCAA00, 0xCC2A2A10,
-            RocketLauncherItem.class);
+            RocketLauncherItem.class),
+
+    INFINITY_CORE("Infinity Core",
+            0xFFFFE36A, 0xFFFFB62E, 0xCC2A2108,
+            InfinityCoreItem.class);
 
     public final String displayName;
     public final int primaryColor;
     public final int secondaryColor;
     public final int backgroundColor;
-    private final Class<? extends Item> itemClass;
+    private final Class<? extends Item>[] itemClasses;
 
+    @SafeVarargs
     CharacterTheme(String displayName, int primary, int secondary, int background,
-                   Class<? extends Item> itemClass) {
+                   Class<? extends Item>... itemClasses) {
         this.displayName = displayName;
         this.primaryColor = primary;
         this.secondaryColor = secondary;
         this.backgroundColor = background;
-        this.itemClass = itemClass;
+        this.itemClasses = itemClasses;
     }
 
     public static CharacterTheme fromItem(Item item) {
         if (item == null) return null;
         for (CharacterTheme theme : values()) {
-            if (theme.itemClass != null && theme.itemClass.isInstance(item)) {
-                return theme;
+            for (Class<? extends Item> itemClass : theme.itemClasses) {
+                if (itemClass.isInstance(item)) return theme;
             }
         }
         return null;

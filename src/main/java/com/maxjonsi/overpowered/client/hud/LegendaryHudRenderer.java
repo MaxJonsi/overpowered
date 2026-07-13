@@ -46,13 +46,13 @@ public class LegendaryHudRenderer {
         ItemStack mainHand = mc.player.getMainHandItem();
         CharacterTheme theme = CharacterTheme.fromItem(mainHand.getItem());
         if (theme != null) {
-            return new MockPowerHudData(theme);
+            return new LivePowerHudData(theme);
         }
 
         ItemStack offHand = mc.player.getOffhandItem();
         theme = CharacterTheme.fromItem(offHand.getItem());
         if (theme != null) {
-            return new MockPowerHudData(theme);
+            return new LivePowerHudData(theme);
         }
 
         return null;
@@ -94,7 +94,7 @@ public class LegendaryHudRenderer {
 
         if (data.isInfinityCore()) {
             int infX = cx + font.width(nameStr) + 4;
-            g.drawString(font, "∞", infX, cy, 0xFFFFDD44, false);
+            g.drawString(font, "\u221e", infX, cy, 0xFFFFDD44, false);
         }
         cy += LINE_HEIGHT + 2;
 
@@ -102,7 +102,7 @@ public class LegendaryHudRenderer {
         cy += BAR_HEIGHT + 4;
 
         for (PowerHudData.AbilityEntry ability : abilities) {
-            boolean canAfford = data.energy() >= ability.cost();
+            boolean canAfford = ability.available() && (data.isInfinityCore() || data.energy() >= ability.cost());
             renderAbilityRow(g, font, cx, cy, ability, theme, canAfford);
             cy += LINE_HEIGHT;
         }

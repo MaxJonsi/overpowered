@@ -103,5 +103,7 @@
   "subtitles.overpowered.shadow.portal": "Открывается теневой портал",
   "subtitles.overpowered.void.absolute_release": "Абсолютная Пустота расширяется",
   "subtitles.overpowered.launcher.nuke_fall": "Ядерный заряд снижается",
-  "key.overpowered.hud_toggle": "Переключить HUD силы"
+  "key.overpowered.hud_toggle": "Переключить HUD силы",
+  "message.overpowered.yamato.no_target": "Air Trick: нужна живая цель у перекрестья",
+  "message.overpowered.yamato.no_space": "За целью нет безопасного места"
 }

@@ -38,7 +38,7 @@ Phase IDs:
 
 | Family | 0 | 1 | 2 | 3 | 4 | 5 | 6 |
 |---|---|---|---|---|---|---|---|
-| Yamato | combo | Judgment Cut | dash | Dimension Rift | Devil Trigger | unused | Final Judgment Cut |
+| Yamato | combo | Judgment Cut | dash / Air Trick | Dimension Rift | Devil Trigger | unused | Final Judgment Cut |
 | Gojo | combo | Blue | Red | Infinity | teleport | Hollow Purple | Unlimited Void |
 | Void | unused | touch | gaze/erase | wave | silence | unused | Absolute Void |
 | DIO | combo | knives | Time Dash | Time Stop | acceleration | unused | rewind |
@@ -53,14 +53,15 @@ Non-zero `detail` values currently mean:
 - Aizen hypnosis: `1` normal or `2` perfect.
 - Aizen evolution: stage `1-3`.
 - Shadow extraction/summon: soul count after the action.
+- Yamato ability 2: `0` for the free-direction `R` dash, `1` for target-locked Air Trick.
 
 Everything else currently sends `detail = 0`. Treat unknown future values as optional metadata.
 
 ## Generic input slots
 
-`AbilityActionPayload` uses action IDs `5-9` for ability slots one through five and `10` for ultimate. The server resolves the equipped item or active Void form. The client should bind these once rather than implementing family-specific gameplay logic. Existing actions remain: swing `0`, special/cycle `1`, mark/Dimension Rift `2`, Void erase `3`, and legacy Void toggle `4`.
+`AbilityActionPayload` uses action IDs `5-9` for ability slots one through five and `10` for ultimate. The server resolves the equipped item or active Void form. The client binds these once rather than implementing family-specific gameplay logic. Existing actions remain: swing `0`, special/cycle `1`, mark/Dimension Rift `2`, Void erase `3`, and legacy Void toggle `4`.
 
-All mechanics are already reachable for testing with item use plus the existing special/mark inputs. The generic slot keys are needed for direct access and final UX.
+Direct access is implemented as `Z/X/C/V/B/G`; special controls remain `R/H/O`.
 
 ## Audio contract
 
@@ -80,7 +81,7 @@ Client-controlled stateful cues:
 - `overpowered:aizen.theme`: start from Perfect Hypnosis preparation and stop/fade at its final state end.
 - `overpowered:gojo.domain_interior`: play only while the local camera is inside Unlimited Void.
 
-## Reference direction and remaining visuals
+## Reference direction and integrated visuals
 
 The derived contact sheets and inventories are in the workspace's `work/reference-audit/` directory. The original files remain under the user's Desktop `assets` folder.
 
@@ -92,6 +93,6 @@ The derived contact sheets and inventories are in the workspace's `work/referenc
 - Shadow: black-violet portals with red accents and armored shadow soldiers.
 - Nuclear: Fallout-style launcher, MIRV/orbital escalation, mushroom cloud and radiation aftermath.
 
-Required Claude-owned work: packet receivers, HUD, key bindings, first/third-person poses, held-item models, entity/item render overrides, camera effects, screen shaders, particles, and animations. No Codex change touched `client/render/`, `client/animation/`, `geo/`, or `animations/`.
+The integration now includes every registered S2C receiver, live HUD data, generic key bindings, Yamato first/third-person poses, existing entity renderers, shared power-event screen/particle presentation, per-player Aizen false afterimages, and all registered item models/textures. Existing Claude renderers, GeckoLib assets, and Yamato animations are preserved.
 
-Infinity Core has no supplied visual reference. Do not finalize its art by guessing; request a reference or explicit direction first.
+Infinity Core had no supplied object reference. Its first-pass original sprite follows the existing gold/infinite-energy language with cyan accents and can be replaced non-destructively if the user later supplies a reference.

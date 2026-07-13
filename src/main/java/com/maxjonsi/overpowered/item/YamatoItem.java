@@ -4,9 +4,11 @@ import com.maxjonsi.overpowered.client.render.YamatoRenderer;
 import com.maxjonsi.overpowered.entity.JudgementCutEndEntity;
 import com.maxjonsi.overpowered.entity.JudgementCutEntity;
 import com.maxjonsi.overpowered.network.YamatoAnimationPayload;
+import com.maxjonsi.overpowered.network.PowerEventPayload;
 import com.maxjonsi.overpowered.registry.ModEntities;
 import com.maxjonsi.overpowered.registry.ModSounds;
 import com.maxjonsi.overpowered.server.PlayerEnergyManager;
+import com.maxjonsi.overpowered.server.PowerEventDispatcher;
 import com.maxjonsi.overpowered.server.YamatoAbilityManager;
 import java.util.HashMap;
 import java.util.Map;
@@ -265,6 +267,8 @@ public class YamatoItem extends Item implements GeoItem {
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.YAMATO_DASH, SoundSource.PLAYERS, 1.2f, 1f);
         triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "dash");
         broadcastPlayerAnimation(player, YamatoAnimationPayload.DASH);
+        PowerEventDispatcher.broadcastDetailed(player, PowerEventPayload.POWER_YAMATO, 2,
+                PowerEventPayload.PHASE_RELEASE, 10, 12, 0);
     }
 
     public static void clearTransientState(UUID playerId) {

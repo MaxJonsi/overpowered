@@ -12,10 +12,13 @@ import com.maxjonsi.overpowered.client.render.JudgementCutEndRenderer;
 import com.maxjonsi.overpowered.client.render.JudgementCutRenderer;
 import com.maxjonsi.overpowered.client.render.LaserBeamRenderer;
 import com.maxjonsi.overpowered.client.render.NukeRenderer;
+import com.maxjonsi.overpowered.client.render.PowerEventPresentation;
 import com.maxjonsi.overpowered.client.render.ShadowRemnantRenderer;
 import com.maxjonsi.overpowered.client.render.SkyTearState;
 import com.maxjonsi.overpowered.item.YamatoItem;
 import com.maxjonsi.overpowered.network.AbilityActionPayload;
+import com.maxjonsi.overpowered.network.EnergyStatePayload;
+import com.maxjonsi.overpowered.network.PowerEventPayload;
 import com.maxjonsi.overpowered.network.VoidStatePayload;
 import com.maxjonsi.overpowered.registry.ModEntities;
 import com.maxjonsi.overpowered.server.VoidAbility;
@@ -39,10 +42,17 @@ public class OverpoweredClient implements ClientModInitializer {
         YamatoPlayerAnimations.init();
         YamatoChargeHud.init();
         LaserBeamRenderer.init();
+        PowerEventPresentation.init();
 
         KeyBindingHelper.registerKeyBinding(ModKeyMappings.SPECIAL);
         KeyBindingHelper.registerKeyBinding(ModKeyMappings.MARK);
         KeyBindingHelper.registerKeyBinding(ModKeyMappings.HUD_TOGGLE);
+        KeyBindingHelper.registerKeyBinding(ModKeyMappings.ABILITY_ONE);
+        KeyBindingHelper.registerKeyBinding(ModKeyMappings.ABILITY_TWO);
+        KeyBindingHelper.registerKeyBinding(ModKeyMappings.ABILITY_THREE);
+        KeyBindingHelper.registerKeyBinding(ModKeyMappings.ABILITY_FOUR);
+        KeyBindingHelper.registerKeyBinding(ModKeyMappings.ABILITY_FIVE);
+        KeyBindingHelper.registerKeyBinding(ModKeyMappings.ULTIMATE);
 
         HudRenderCallback.EVENT.register(LegendaryHudRenderer::render);
 
@@ -57,6 +67,7 @@ public class OverpoweredClient implements ClientModInitializer {
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
+            ClientEnergyState.tick();
             if (ClientVoidState.isActive(client.player.getId())) {
                 client.player.fallDistance = 0;
             }
@@ -68,6 +79,24 @@ public class OverpoweredClient implements ClientModInitializer {
             }
             while (ModKeyMappings.HUD_TOGGLE.consumeClick()) {
                 LegendaryHudRenderer.toggleVisibility();
+            }
+            while (ModKeyMappings.ABILITY_ONE.consumeClick()) {
+                ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.ABILITY_ONE));
+            }
+            while (ModKeyMappings.ABILITY_TWO.consumeClick()) {
+                ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.ABILITY_TWO));
+            }
+            while (ModKeyMappings.ABILITY_THREE.consumeClick()) {
+                ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.ABILITY_THREE));
+            }
+            while (ModKeyMappings.ABILITY_FOUR.consumeClick()) {
+                ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.ABILITY_FOUR));
+            }
+            while (ModKeyMappings.ABILITY_FIVE.consumeClick()) {
+                ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.ABILITY_FIVE));
+            }
+            while (ModKeyMappings.ULTIMATE.consumeClick()) {
+                ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.ULTIMATE));
             }
         });
 
@@ -100,10 +129,16 @@ public class OverpoweredClient implements ClientModInitializer {
 
         ClientPlayNetworking.registerGlobalReceiver(VoidStatePayload.TYPE, (payload, context) ->
                 ClientVoidState.set(payload.entityId(), payload.active()));
+        ClientPlayNetworking.registerGlobalReceiver(EnergyStatePayload.TYPE, (payload, context) ->
+                context.client().execute(() -> ClientEnergyState.accept(payload)));
+        ClientPlayNetworking.registerGlobalReceiver(PowerEventPayload.TYPE, (payload, context) ->
+                context.client().execute(() -> PowerEventPresentation.receive(payload)));
 
         ClientEntityEvents.ENTITY_UNLOAD.register((entity, level) -> ClientVoidState.remove(entity.getId()));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(() -> {
             ClientVoidState.clear();
+            ClientEnergyState.clear();
+            ClientPowerEventState.clear();
             SkyTearState.clear();
         }));
     }

@@ -82,6 +82,10 @@ public final class AizenAbilityManager {
         HYPNOSIS.put(target.getUUID(), new HypnosisState(player.getUUID(), endTick, false));
         target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 80, 0, false, false));
         target.addEffect(new MobEffectInstance(MobEffects.GLOWING, 40, 0, false, false));
+        if (target instanceof ServerPlayer targetPlayer) {
+            sendHypnosisState(player, targetPlayer, HYPNOSIS_DURATION, false,
+                    PowerEventPayload.PHASE_STATE_START);
+        }
         PowerEventDispatcher.broadcast(player, PowerEventPayload.POWER_AIZEN, 2,
                 PowerEventPayload.PHASE_STATE_START, HYPNOSIS_DURATION, 32);
     }
@@ -161,20 +165,21 @@ public final class AizenAbilityManager {
             Entity target = findEntity(server, entry.getKey());
             HypnosisState state = entry.getValue();
             ServerPlayer caster = server.getPlayerList().getPlayer(state.casterId);
-            if (target == null || caster == null || target.level().getGameTime() >= state.endTick) {
+            boolean expired = target != null && target.level().getGameTime() >= state.endTick;
+            if (target == null || caster == null || expired) {
+                if (target instanceof ServerPlayer targetPlayer && caster != null) {
+                    sendHypnosisState(caster, targetPlayer, 0, state.perfect,
+                            PowerEventPayload.PHASE_STATE_END);
+                }
                 iterator.remove();
                 continue;
             }
             if (target instanceof LivingEntity living && target.tickCount % 60 == 0) {
                 living.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 80, 0, true, false));
                 if (target instanceof ServerPlayer targetPlayer) {
-                    PowerEventDispatcher.sendIfSupported(targetPlayer, new PowerEventPayload(
-                            caster.getId(), PowerEventPayload.POWER_AIZEN, 2,
-                            PowerEventPayload.PHASE_STATE_START,
+                    sendHypnosisState(caster, targetPlayer,
                             (int) Math.max(0, state.endTick - target.level().getGameTime()),
-                            40,
-                            state.perfect ? 2 : 1,
-                            caster.blockPosition().asLong()));
+                            state.perfect, PowerEventPayload.PHASE_STATE_START);
                 }
             }
         }
@@ -226,6 +231,10 @@ public final class AizenAbilityManager {
                 HYPNOSIS.put(target.getUUID(), new HypnosisState(caster.getUUID(), endTick, true));
                 target.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 120, 0, false, false));
                 target.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 80, 0, false, false));
+                if (target instanceof ServerPlayer targetPlayer) {
+                    sendHypnosisState(caster, targetPlayer, PERFECT_DURATION, true,
+                            PowerEventPayload.PHASE_STATE_START);
+                }
             }
             PERFECT_ENDS.put(caster.getUUID(), endTick);
             PowerEventDispatcher.broadcast(caster, PowerEventPayload.POWER_AIZEN, 6,
@@ -266,6 +275,13 @@ public final class AizenAbilityManager {
             if (entity != null) return entity;
         }
         return null;
+    }
+
+    private static void sendHypnosisState(ServerPlayer caster, ServerPlayer target,
+            int durationTicks, boolean perfect, int phase) {
+        PowerEventDispatcher.sendIfSupported(target, new PowerEventPayload(
+                caster.getId(), PowerEventPayload.POWER_AIZEN, 2, phase,
+                durationTicks, 40, perfect ? 2 : 1, caster.blockPosition().asLong()));
     }
 
     public static void clearPlayer(UUID playerId) {

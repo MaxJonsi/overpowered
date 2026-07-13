@@ -103,5 +103,7 @@
   "subtitles.overpowered.shadow.portal": "A shadow portal opens",
   "subtitles.overpowered.void.absolute_release": "Absolute Void expands",
   "subtitles.overpowered.launcher.nuke_fall": "A nuclear payload descends",
-  "key.overpowered.hud_toggle": "Toggle Power HUD"
+  "key.overpowered.hud_toggle": "Toggle Power HUD",
+  "message.overpowered.yamato.no_target": "Air Trick needs a living target near the crosshair",
+  "message.overpowered.yamato.no_space": "No safe space behind the target"
 }

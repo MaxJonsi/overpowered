@@ -16,15 +16,19 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 public final class YamatoAbilityManager {
+    public static final int AIR_TRICK_COST = 12;
     public static final int DIMENSION_RIFT_COST = 24;
     public static final int DEVIL_TRIGGER_COST = 35;
     public static final int FINAL_COST = 45;
     public static final int RIFT_RANGE = 32;
+    public static final int AIR_TRICK_RANGE = 36;
     public static final int DEVIL_TRIGGER_DURATION = 20 * 30;
     public static final int FINAL_PREPARE_TICKS = 40;
     public static final int FINAL_RELEASE_TICKS = 130;
@@ -33,6 +37,76 @@ public final class YamatoAbilityManager {
     private static final Map<UUID, FinalState> FINALS = new HashMap<>();
 
     private YamatoAbilityManager() {
+    }
+
+    /**
+     * Locks onto the living target nearest the crosshair and folds space to place the
+     * player safely behind it. Unlike the normal dash this deliberately ignores
+     * intervening blocks; collision is only tested at the arrival point.
+     */
+    public static boolean airTrick(ServerPlayer player) {
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 end = eye.add(player.getLookAngle().scale(AIR_TRICK_RANGE));
+        EntityHitResult hit = ProjectileUtil.getEntityHitResult(level, player, eye, end,
+                new AABB(eye, end).inflate(1.75),
+                entity -> entity instanceof LivingEntity && entity != player && entity.isAlive());
+        if (hit == null || !(hit.getEntity() instanceof LivingEntity target)) {
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                    "message.overpowered.yamato.no_target"), true);
+            return false;
+        }
+
+        Vec3 targetFacing = target.getLookAngle();
+        Vec3 horizontalFacing = new Vec3(targetFacing.x, 0, targetFacing.z);
+        if (horizontalFacing.lengthSqr() < 0.001) {
+            horizontalFacing = target.position().subtract(player.position()).multiply(1, 0, 1);
+        }
+        if (horizontalFacing.lengthSqr() < 0.001) horizontalFacing = new Vec3(0, 0, 1);
+        horizontalFacing = horizontalFacing.normalize();
+
+        Vec3 destination = findSafeAirTrickDestination(player, target, horizontalFacing.scale(-2.1));
+        if (destination == null) {
+            player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+                    "message.overpowered.yamato.no_space"), true);
+            return false;
+        }
+        if (!PlayerEnergyManager.tryConsumeOrNotify(player, AIR_TRICK_COST)) return false;
+
+        Vec3 origin = player.position();
+        level.sendParticles(new DustParticleOptions(new Vector3f(0.08f, 0.36f, 1f), 1.35f),
+                origin.x, origin.y + 1, origin.z, 22, 0.3, 0.75, 0.3, 0.02);
+        player.teleportTo(destination.x, destination.y, destination.z);
+        player.setDeltaMovement(Vec3.ZERO);
+        player.fallDistance = 0;
+        player.setYRot(target.getYRot());
+        level.sendParticles(new DustParticleOptions(new Vector3f(0.6f, 0.9f, 1f), 1.5f),
+                destination.x, destination.y + 1, destination.z, 28, 0.35, 0.8, 0.35, 0.025);
+        level.playSound(null, destination.x, destination.y, destination.z,
+                ModSounds.YAMATO_DASH, SoundSource.PLAYERS, 1.3f, 1.25f);
+        PowerEventDispatcher.broadcastDetailed(player, PowerEventPayload.POWER_YAMATO, 2,
+                PowerEventPayload.PHASE_RELEASE, 10, AIR_TRICK_RANGE, 1);
+        return true;
+    }
+
+    private static Vec3 findSafeAirTrickDestination(ServerPlayer player, LivingEntity target, Vec3 behind) {
+        Vec3 base = target.position().add(behind);
+        Vec3 lateral = new Vec3(-behind.z, 0, behind.x).normalize();
+        Vec3[] offsets = {
+                Vec3.ZERO,
+                lateral.scale(1.25),
+                lateral.scale(-1.25),
+                behind.normalize().scale(-1.25),
+                new Vec3(0, 1, 0)
+        };
+        for (Vec3 offset : offsets) {
+            Vec3 candidate = base.add(offset);
+            if (player.serverLevel().noCollision(player,
+                    player.getBoundingBox().move(candidate.subtract(player.position())))) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     public static void dimensionRift(ServerPlayer player) {

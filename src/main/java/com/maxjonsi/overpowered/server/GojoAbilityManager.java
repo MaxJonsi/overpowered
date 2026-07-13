@@ -1,6 +1,7 @@
 package com.maxjonsi.overpowered.server;
 
 import com.maxjonsi.overpowered.item.GojoMaskItem;
+import com.maxjonsi.overpowered.item.SixEyesItem;
 import com.maxjonsi.overpowered.network.PowerEventPayload;
 import java.util.HashSet;
 import java.util.Set;
@@ -20,13 +21,14 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 public final class GojoAbilityManager {
-    public static final int INFINITY_TOGGLE_COST = 10;
+    public static final int INFINITY_TOGGLE_COST = 0;
     public static final int INFINITY_BLOCK_COST = 2;
     public static final int TELEPORT_COST = 12;
     public static final int COMBO_COST = 2;
     public static final int TELEPORT_RANGE = 36;
 
     private static final Set<UUID> INFINITY_USERS = new HashSet<>();
+    private static final Set<UUID> INFINITY_DISABLED = new HashSet<>();
     private static final java.util.Map<UUID, Long> LAST_COMBO = new java.util.HashMap<>();
 
     private GojoAbilityManager() {
@@ -36,20 +38,27 @@ public final class GojoAbilityManager {
         return entity.getItemBySlot(EquipmentSlot.HEAD).getItem() instanceof GojoMaskItem;
     }
 
+    public static boolean hasGojoLoadout(LivingEntity entity) {
+        return hasMask(entity)
+                && (entity.getMainHandItem().getItem() instanceof SixEyesItem
+                || entity.getOffhandItem().getItem() instanceof SixEyesItem);
+    }
+
     public static boolean isInfinityActive(UUID playerId) {
         return INFINITY_USERS.contains(playerId);
     }
 
     public static void toggleInfinity(ServerPlayer player) {
-        if (!hasMask(player)) return;
+        if (!hasGojoLoadout(player)) return;
 
         if (INFINITY_USERS.remove(player.getUUID())) {
+            INFINITY_DISABLED.add(player.getUUID());
             PowerEventDispatcher.broadcast(player, PowerEventPayload.POWER_GOJO, 3,
                     PowerEventPayload.PHASE_STATE_END, 0, 5);
             return;
         }
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, INFINITY_TOGGLE_COST)) return;
 
+        INFINITY_DISABLED.remove(player.getUUID());
         INFINITY_USERS.add(player.getUUID());
         PowerEventDispatcher.broadcast(player, PowerEventPayload.POWER_GOJO, 3,
                 PowerEventPayload.PHASE_STATE_START, 0, 5);
@@ -107,7 +116,7 @@ public final class GojoAbilityManager {
     public static boolean allowDamage(LivingEntity victim, DamageSource source, float amount) {
         if (!(victim instanceof ServerPlayer player)
                 || !INFINITY_USERS.contains(player.getUUID())
-                || !hasMask(player)) {
+                || !hasGojoLoadout(player)) {
             return true;
         }
 
@@ -115,6 +124,7 @@ public final class GojoAbilityManager {
         if (threat == null) return true;
         if (!PlayerEnergyManager.tryConsume(player, INFINITY_BLOCK_COST)) {
             INFINITY_USERS.remove(player.getUUID());
+            INFINITY_DISABLED.add(player.getUUID());
             PowerEventDispatcher.broadcast(player, PowerEventPayload.POWER_GOJO, 3,
                     PowerEventPayload.PHASE_STATE_END, 0, 5);
             return true;
@@ -132,21 +142,40 @@ public final class GojoAbilityManager {
     }
 
     public static void tick(MinecraftServer server) {
-        INFINITY_USERS.removeIf(playerId -> {
-            ServerPlayer player = server.getPlayerList().getPlayer(playerId);
-            if (player == null || !hasMask(player)) return true;
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID playerId = player.getUUID();
+            if (!hasGojoLoadout(player)) {
+                INFINITY_DISABLED.remove(playerId);
+                if (INFINITY_USERS.remove(playerId)) {
+                    PowerEventDispatcher.broadcast(player, PowerEventPayload.POWER_GOJO, 3,
+                            PowerEventPayload.PHASE_STATE_END, 0, 5);
+                }
+                continue;
+            }
 
-            if (player.tickCount % 10 == 0) {
+            if (!INFINITY_DISABLED.contains(playerId) && INFINITY_USERS.add(playerId)) {
+                PowerEventDispatcher.broadcast(player, PowerEventPayload.POWER_GOJO, 3,
+                        PowerEventPayload.PHASE_STATE_START, 0, 5);
+            }
+            if (INFINITY_USERS.contains(playerId) && player.tickCount % 10 == 0) {
                 player.serverLevel().sendParticles(
                         new DustParticleOptions(new Vector3f(0.5f, 0.82f, 1f), 0.85f),
                         player.getX(), player.getY() + 1, player.getZ(), 3, 0.5, 0.8, 0.5, 0.005);
             }
-            return false;
-        });
+        }
+        INFINITY_USERS.removeIf(playerId -> server.getPlayerList().getPlayer(playerId) == null);
+        INFINITY_DISABLED.removeIf(playerId -> server.getPlayerList().getPlayer(playerId) == null);
+    }
+
+    public static void clearPlayer(UUID playerId) {
+        INFINITY_USERS.remove(playerId);
+        INFINITY_DISABLED.remove(playerId);
+        LAST_COMBO.remove(playerId);
     }
 
     public static void clear() {
         INFINITY_USERS.clear();
+        INFINITY_DISABLED.clear();
         LAST_COMBO.clear();
     }
 }
