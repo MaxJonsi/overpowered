@@ -15,9 +15,14 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import software.bernie.geckolib.animatable.GeoEntity;
+import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
+import software.bernie.geckolib.animation.AnimatableManager;
+import software.bernie.geckolib.util.GeckoLibUtil;
 
-public class NukeEntity extends Entity {
+public class NukeEntity extends Entity implements GeoEntity {
     private static final int RADIUS = 50;
+    private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
 
     private boolean detonated;
     private BlockPos center = BlockPos.ZERO;
@@ -147,5 +152,14 @@ public class NukeEntity extends Entity {
         tag.putInt("CenterX", center.getX());
         tag.putInt("CenterY", center.getY());
         tag.putInt("CenterZ", center.getZ());
+    }
+
+    @Override
+    public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
+    }
+
+    @Override
+    public AnimatableInstanceCache getAnimatableInstanceCache() {
+        return geoCache;
     }
 }
