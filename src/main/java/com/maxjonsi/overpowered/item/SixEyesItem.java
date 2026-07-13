@@ -6,6 +6,8 @@ import com.maxjonsi.overpowered.entity.HollowPurpleEntity;
 import com.maxjonsi.overpowered.registry.ModDataComponents;
 import com.maxjonsi.overpowered.registry.ModEntities;
 import com.maxjonsi.overpowered.registry.ModSounds;
+import com.maxjonsi.overpowered.server.PlayerEnergyManager;
+import com.maxjonsi.overpowered.server.GojoAbilityManager;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -32,12 +34,21 @@ public class SixEyesItem extends Item {
     public static final int TECH_RED = 1;
     public static final int TECH_PURPLE = 2;
     public static final int TECH_DOMAIN = 3;
+    public static final int TECH_INFINITY = 4;
+    public static final int TECH_TELEPORT = 5;
+
+    public static final int BLUE_COST = 15;
+    public static final int RED_COST = 18;
+    public static final int PURPLE_COST = 45;
+    public static final int DOMAIN_COST = 75;
 
     private static final String[] TECH_KEYS = {
             "message.overpowered.technique.blue",
             "message.overpowered.technique.red",
             "message.overpowered.technique.purple",
-            "message.overpowered.technique.domain"};
+            "message.overpowered.technique.domain",
+            "message.overpowered.technique.infinity",
+            "message.overpowered.technique.teleport"};
 
     public SixEyesItem(Properties properties) {
         super(properties);
@@ -50,19 +61,40 @@ public class SixEyesItem extends Item {
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
         }
 
-        if (!hasRequiredMask(serverPlayer)) {
-            serverPlayer.displayClientMessage(Component.translatable("message.overpowered.gojo.mask_required"), true);
+        int technique = stack.getOrDefault(ModDataComponents.TECHNIQUE, TECH_BLUE);
+        if (!castTechnique(serverPlayer, technique)) {
             return InteractionResultHolder.fail(stack);
         }
-
-        int technique = stack.getOrDefault(ModDataComponents.TECHNIQUE, TECH_BLUE);
-        switch (technique) {
-            case TECH_BLUE -> castBlue(serverLevel, serverPlayer);
-            case TECH_RED -> castRed(serverLevel, serverPlayer);
-            case TECH_PURPLE -> castPurple(serverLevel, serverPlayer);
-            case TECH_DOMAIN -> castDomain(serverLevel, serverPlayer);
-        }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+    }
+
+    public boolean castTechnique(ServerPlayer player, int technique) {
+        if (!hasRequiredMask(player)) {
+            player.displayClientMessage(Component.translatable("message.overpowered.gojo.mask_required"), true);
+            return false;
+        }
+        if (technique == TECH_INFINITY) {
+            GojoAbilityManager.toggleInfinity(player);
+            return true;
+        }
+        if (technique == TECH_TELEPORT) {
+            GojoAbilityManager.teleport(player);
+            return true;
+        }
+        if (technique == TECH_DOMAIN && DomainEntity.getActive(player.getUUID()) != null) return false;
+        if (!PlayerEnergyManager.tryConsumeOrNotify(player, energyCostFor(technique))) return false;
+
+        ServerLevel level = player.serverLevel();
+        switch (technique) {
+            case TECH_BLUE -> castBlue(level, player);
+            case TECH_RED -> castRed(level, player);
+            case TECH_PURPLE -> castPurple(level, player);
+            case TECH_DOMAIN -> castDomain(level, player);
+            default -> {
+                return false;
+            }
+        }
+        return true;
     }
 
     private void castBlue(ServerLevel level, ServerPlayer player) {
@@ -137,14 +169,24 @@ public class SixEyesItem extends Item {
             return;
         }
 
-        int technique = (stack.getOrDefault(ModDataComponents.TECHNIQUE, TECH_BLUE) + 1) % 4;
+        int technique = (stack.getOrDefault(ModDataComponents.TECHNIQUE, TECH_BLUE) + 1) % TECH_KEYS.length;
         stack.set(ModDataComponents.TECHNIQUE, technique);
         ServerLevel level = player.serverLevel();
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_MODE, SoundSource.PLAYERS, 1f, 1.4f);
         player.displayClientMessage(Component.translatable(TECH_KEYS[technique]), true);
     }
 
-    private static boolean hasRequiredMask(Player player) {
+    public static boolean hasRequiredMask(Player player) {
         return player.getItemBySlot(EquipmentSlot.HEAD).getItem() instanceof GojoMaskItem;
+    }
+
+    private static int energyCostFor(int technique) {
+        return switch (technique) {
+            case TECH_BLUE -> BLUE_COST;
+            case TECH_RED -> RED_COST;
+            case TECH_PURPLE -> PURPLE_COST;
+            case TECH_DOMAIN -> DOMAIN_COST;
+            default -> 0;
+        };
     }
 }

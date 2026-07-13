@@ -1,6 +1,7 @@
 package com.maxjonsi.overpowered.entity;
 
 import com.maxjonsi.overpowered.registry.ModSounds;
+import com.maxjonsi.overpowered.server.NuclearAbilityManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -10,6 +11,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.sounds.SoundSource;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -31,8 +33,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class NukeEntity extends Entity implements GeoEntity {
-    public static final int RADIUS = 100;
-    private static final int RADIUS_SQUARED = RADIUS * RADIUS;
+    public static final int DEFAULT_RADIUS = 100;
     private static final int MAX_VISITED_POSITIONS_PER_TICK = 20_000;
     private static final int CENTER_TICKET_RADIUS = 2;
     private static final int CHUNK_TICKET_RADIUS = 0;
@@ -52,6 +53,7 @@ public class NukeEntity extends Entity implements GeoEntity {
     private int lingerTicks;
     private int cloudTicks;
     private ChunkPos anchorTicketChunk;
+    private int blastRadius = DEFAULT_RADIUS;
 
     public NukeEntity(EntityType<?> type, Level level) {
         super(type, level);
@@ -67,6 +69,7 @@ public class NukeEntity extends Entity implements GeoEntity {
         if (!detonated) {
             if (tickCount == 1) {
                 level.playSound(null, getX(), getY(), getZ(), ModSounds.LAUNCHER_SIREN, SoundSource.MASTER, 12f, 1f);
+                level.playSound(null, getX(), getY(), getZ(), ModSounds.LAUNCHER_NUKE_FALL, SoundSource.MASTER, 8f, 1f);
             }
             Vec3 next = position().add(0, -0.9, 0);
             BlockPos below = BlockPos.containing(next);
@@ -96,7 +99,7 @@ public class NukeEntity extends Entity implements GeoEntity {
     private void detonate(ServerLevel level) {
         detonated = true;
         center = blockPosition();
-        cursorY = center.getY() + RADIUS;
+        cursorY = center.getY() + blastRadius;
         resetCursorForLayer();
         destructionComplete = false;
         setInvisible(true);
@@ -106,10 +109,21 @@ public class NukeEntity extends Entity implements GeoEntity {
         level.playSound(null, getX(), getY(), getZ(), ModSounds.LAUNCHER_NUKE, SoundSource.MASTER, 16f, 0.8f);
         level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY(), getZ(), 20, 8, 4, 8, 0);
         level.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2, getZ(), 3, 0, 0, 0, 0);
+        NuclearAbilityManager.addRadiationZone(level, Vec3.atCenterOf(center),
+                Math.max(18, (int) (blastRadius * 0.75)), 20 * 30);
     }
 
     public void prepareForLaunch(ServerLevel level) {
         maintainChunkTickets(level);
+    }
+
+    public void setBlastRadius(int blastRadius) {
+        if (detonated) return;
+        this.blastRadius = Mth.clamp(blastRadius, 8, 120);
+    }
+
+    public int getBlastRadius() {
+        return blastRadius;
     }
 
     private void destroyBlocks(ServerLevel level) {
@@ -124,7 +138,7 @@ public class NukeEntity extends Entity implements GeoEntity {
             int dz = cursorZ;
 
             int dy = y - center.getY();
-            if (dx * dx + dy * dy + dz * dz > RADIUS_SQUARED
+            if (dx * dx + dy * dy + dz * dz > blastRadius * blastRadius
                     || y < level.getMinBuildHeight() || y >= level.getMaxBuildHeight()) {
                 advanceCursor(layerRadius);
                 visited++;
@@ -205,7 +219,7 @@ public class NukeEntity extends Entity implements GeoEntity {
         if (cursorX <= layerRadius) return;
 
         cursorY--;
-        if (cursorY < center.getY() - RADIUS) {
+        if (cursorY < center.getY() - blastRadius) {
             destructionComplete = true;
             return;
         }
@@ -220,13 +234,14 @@ public class NukeEntity extends Entity implements GeoEntity {
 
     private int radiusAt(int y) {
         int dy = y - center.getY();
-        int radiusSquared = RADIUS_SQUARED - dy * dy;
+        int radiusSquared = blastRadius * blastRadius - dy * dy;
         return radiusSquared <= 0 ? 0 : (int) Math.floor(Math.sqrt(radiusSquared));
     }
 
     private void spawnMushroomCloud(ServerLevel level) {
         if (cloudTicks % 2 != 0) return;
-        double stemHeight = Math.min(46, cloudTicks * 0.9);
+        double scale = blastRadius / (double) DEFAULT_RADIUS;
+        double stemHeight = Math.min(46 * scale, cloudTicks * 0.9 * Math.max(0.45, scale));
 
         for (int i = 0; i < 8; i++) {
             double h = random.nextDouble() * stemHeight;
@@ -238,7 +253,7 @@ public class NukeEntity extends Entity implements GeoEntity {
         }
         level.sendParticles(ParticleTypes.FLAME, center.getX(), center.getY() + 1.5, center.getZ(), 5, 1.6, 2.5, 1.6, 0.04);
 
-        double capRadius = Math.min(17, stemHeight * 0.42);
+        double capRadius = Math.min(17 * scale, stemHeight * 0.42);
         for (int i = 0; i < 10; i++) {
             double angle = random.nextDouble() * Math.PI * 2;
             double r = capRadius * Math.sqrt(random.nextDouble());
@@ -265,11 +280,12 @@ public class NukeEntity extends Entity implements GeoEntity {
     private void damageWave(ServerLevel level) {
         if (tickCount % 10 != 0) return;
         Vec3 c = Vec3.atCenterOf(center);
-        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(c, c).inflate(70),
+        double damageRadius = Math.max(14, blastRadius * 0.7);
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(c, c).inflate(damageRadius),
                 e -> e.isAlive() && !e.isSpectator())) {
             double dist = target.position().distanceTo(c);
-            if (dist > 70) continue;
-            float damage = (float) (120 * (1 - dist / 70));
+            if (dist > damageRadius) continue;
+            float damage = (float) (Math.max(35, blastRadius * 1.2) * (1 - dist / damageRadius));
             target.hurt(level.damageSources().explosion(this, null), damage);
             target.igniteForSeconds(5);
         }
@@ -295,6 +311,7 @@ public class NukeEntity extends Entity implements GeoEntity {
         destructionComplete = tag.getBoolean("DestructionComplete");
         lingerTicks = tag.getInt("LingerTicks");
         cloudTicks = tag.getInt("CloudTicks");
+        blastRadius = tag.contains("BlastRadius") ? tag.getInt("BlastRadius") : DEFAULT_RADIUS;
     }
 
     @Override
@@ -309,6 +326,7 @@ public class NukeEntity extends Entity implements GeoEntity {
         tag.putBoolean("DestructionComplete", destructionComplete);
         tag.putInt("LingerTicks", lingerTicks);
         tag.putInt("CloudTicks", cloudTicks);
+        tag.putInt("BlastRadius", blastRadius);
     }
 
     @Override

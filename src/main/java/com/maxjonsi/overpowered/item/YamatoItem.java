@@ -6,6 +6,8 @@ import com.maxjonsi.overpowered.entity.JudgementCutEntity;
 import com.maxjonsi.overpowered.network.YamatoAnimationPayload;
 import com.maxjonsi.overpowered.registry.ModEntities;
 import com.maxjonsi.overpowered.registry.ModSounds;
+import com.maxjonsi.overpowered.server.PlayerEnergyManager;
+import com.maxjonsi.overpowered.server.YamatoAbilityManager;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -48,6 +50,11 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class YamatoItem extends Item implements GeoItem {
+    public static final int COMBO_COST = 2;
+    public static final int JUDGEMENT_CUT_COST = 8;
+    public static final int JUDGEMENT_CUT_END_COST = 45;
+    public static final int DASH_COST = 12;
+
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.overpowered.yamato.idle");
     private static final Map<UUID, long[]> COMBO = new HashMap<>();
     private static final Map<UUID, Long> DASH_COOLDOWN = new HashMap<>();
@@ -110,6 +117,12 @@ public class YamatoItem extends Item implements GeoItem {
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
         if (player.isShiftKeyDown()) {
+            if (player instanceof ServerPlayer serverPlayer
+                    && !PlayerEnergyManager.canConsume(serverPlayer, JUDGEMENT_CUT_END_COST)) {
+                PlayerEnergyManager.tryConsumeOrNotify(serverPlayer, JUDGEMENT_CUT_END_COST);
+                return InteractionResultHolder.fail(stack);
+            }
+
             player.startUsingItem(hand);
             if (level instanceof ServerLevel serverLevel) {
                 triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "sheath");
@@ -123,28 +136,10 @@ public class YamatoItem extends Item implements GeoItem {
         }
 
         if (level instanceof ServerLevel serverLevel) {
-            Vec3 eye = player.getEyePosition();
-            Vec3 look = player.getLookAngle();
-            Vec3 end = eye.add(look.scale(24));
-            BlockHitResult blockHit = level.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
-            Vec3 target = blockHit.getType() == HitResult.Type.MISS ? end : blockHit.getLocation().subtract(look.scale(1.5));
-            EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(level, player, eye, target,
-                    new AABB(eye, target).inflate(1), e -> e instanceof LivingEntity && e != player && e.isAlive());
-            if (entityHit != null) {
-                Entity hit = entityHit.getEntity();
-                target = hit.position().add(0, hit.getBbHeight() / 2, 0);
+            if (!(player instanceof ServerPlayer serverPlayer)
+                    || !performJudgementCut(serverPlayer, stack)) {
+                return InteractionResultHolder.fail(stack);
             }
-
-            JudgementCutEntity cut = new JudgementCutEntity(ModEntities.JUDGEMENT_CUT, level);
-            cut.setOwnerId(player.getUUID());
-            cut.setPos(target);
-            serverLevel.addFreshEntity(cut);
-
-            triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "judgement_cut");
-            if (player instanceof ServerPlayer serverPlayer) {
-                broadcastPlayerAnimation(serverPlayer, YamatoAnimationPayload.JUDGEMENT_CUT);
-            }
-            player.getCooldowns().addCooldown(this, 15);
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
     }
@@ -154,17 +149,47 @@ public class YamatoItem extends Item implements GeoItem {
         if (!(level instanceof ServerLevel serverLevel) || !(living instanceof ServerPlayer player)) return;
         int held = getUseDuration(stack, living) - remaining;
         if (held == 30) {
+            if (!YamatoAbilityManager.startFinal(player)) {
+                player.stopUsingItem();
+                return;
+            }
+
             player.stopUsingItem();
             triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "unleash");
             broadcastPlayerAnimation(player, YamatoAnimationPayload.UNLEASH);
 
-            JudgementCutEndEntity end = new JudgementCutEndEntity(ModEntities.JUDGEMENT_CUT_END, level);
-            end.setOwnerId(player.getUUID());
-            end.setPos(player.position());
-            serverLevel.addFreshEntity(end);
-
             player.getCooldowns().addCooldown(this, 600);
         }
+    }
+
+    public boolean performJudgementCut(ServerPlayer player, ItemStack stack) {
+        if (!PlayerEnergyManager.tryConsumeOrNotify(player, JUDGEMENT_CUT_COST)) return false;
+
+        ServerLevel level = player.serverLevel();
+        Vec3 eye = player.getEyePosition();
+        Vec3 look = player.getLookAngle();
+        Vec3 end = eye.add(look.scale(24));
+        BlockHitResult blockHit = level.clip(new ClipContext(eye, end,
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+        Vec3 target = blockHit.getType() == HitResult.Type.MISS
+                ? end
+                : blockHit.getLocation().subtract(look.scale(1.5));
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(level, player, eye, target,
+                new AABB(eye, target).inflate(1),
+                entity -> entity instanceof LivingEntity && entity != player && entity.isAlive());
+        if (entityHit != null) {
+            Entity hit = entityHit.getEntity();
+            target = hit.position().add(0, hit.getBbHeight() / 2, 0);
+        }
+
+        JudgementCutEntity cut = new JudgementCutEntity(ModEntities.JUDGEMENT_CUT, level);
+        cut.setOwnerId(player.getUUID());
+        cut.setPos(target);
+        level.addFreshEntity(cut);
+        triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "judgement_cut");
+        broadcastPlayerAnimation(player, YamatoAnimationPayload.JUDGEMENT_CUT);
+        player.getCooldowns().addCooldown(this, 15);
+        return true;
     }
 
     @Override
@@ -183,6 +208,7 @@ public class YamatoItem extends Item implements GeoItem {
         long now = level.getGameTime();
         long[] combo = COMBO.computeIfAbsent(player.getUUID(), k -> new long[]{-1, 0});
         if (now - combo[1] < 5 && combo[0] >= 0) return;
+        if (!PlayerEnergyManager.tryConsumeOrNotify(player, COMBO_COST)) return;
 
         Vec3 pickEye = player.getEyePosition();
         Vec3 pickEnd = pickEye.add(player.getLookAngle().scale(4.5));
@@ -216,6 +242,7 @@ public class YamatoItem extends Item implements GeoItem {
         long now = level.getGameTime();
         Long last = DASH_COOLDOWN.get(player.getUUID());
         if (last != null && now - last < 50) return;
+        if (!PlayerEnergyManager.tryConsumeOrNotify(player, DASH_COST)) return;
         DASH_COOLDOWN.put(player.getUUID(), now);
 
         Vec3 look = player.getLookAngle();
@@ -243,11 +270,13 @@ public class YamatoItem extends Item implements GeoItem {
     public static void clearTransientState(UUID playerId) {
         COMBO.remove(playerId);
         DASH_COOLDOWN.remove(playerId);
+        YamatoAbilityManager.clearPlayer(playerId);
     }
 
     public static void clearAllTransientState() {
         COMBO.clear();
         DASH_COOLDOWN.clear();
+        YamatoAbilityManager.clear();
     }
 
     private static void broadcastPlayerAnimation(ServerPlayer player, int animation) {

@@ -45,3 +45,9 @@ public interface PowerHudData {
 
 ### [2026-07-13] Master Design Document
 Full creative vision documented at `docs/MASTER_DESIGN.md`. All characters, abilities, HUD spec, energy system, atmosphere rules, VFX three-stage principle, and domain ownership. Both agents should reference this for design decisions.
+
+### [2026-07-13] Correct integration base
+Claude's merge commit `5c66be8` merged remote Codex commit `9aca9d6`, not the completed local server commit `2ca01ef`. The release candidate must descend from both `cb925cb` and `2ca01ef`; successful compilation of either branch alone is not evidence of complete integration.
+
+### [2026-07-13] Client authority boundary
+`EnergyStatePayload` feeds display-only HUD state. `PowerEventPayload` feeds presentation-only timed effects. Damage, energy deduction, targets, block changes, movement validity, rewind restoration, and ultimate phases remain server-authoritative.

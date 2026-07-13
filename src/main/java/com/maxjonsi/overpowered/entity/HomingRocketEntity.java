@@ -24,6 +24,7 @@ public class HomingRocketEntity extends Projectile implements GeoEntity {
 
     private static final double SPEED = 1.4;
     private int targetId = -1;
+    private float explosionPower = 3.5f;
 
     public HomingRocketEntity(EntityType<? extends HomingRocketEntity> type, Level level) {
         super(type, level);
@@ -32,6 +33,10 @@ public class HomingRocketEntity extends Projectile implements GeoEntity {
 
     public void setTargetId(int targetId) {
         this.targetId = targetId;
+    }
+
+    public void setExplosionPower(float explosionPower) {
+        this.explosionPower = Mth.clamp(explosionPower, 1f, 12f);
     }
 
     @Override
@@ -94,7 +99,7 @@ public class HomingRocketEntity extends Projectile implements GeoEntity {
     }
 
     private void explode(ServerLevel level) {
-        level.explode(this, getX(), getY(), getZ(), 3.5f, Level.ExplosionInteraction.TNT);
+        level.explode(this, getX(), getY(), getZ(), explosionPower, Level.ExplosionInteraction.TNT);
         discard();
     }
 
@@ -106,11 +111,13 @@ public class HomingRocketEntity extends Projectile implements GeoEntity {
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
+        if (tag.contains("ExplosionPower")) explosionPower = tag.getFloat("ExplosionPower");
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
+        tag.putFloat("ExplosionPower", explosionPower);
     }
 
     @Override
