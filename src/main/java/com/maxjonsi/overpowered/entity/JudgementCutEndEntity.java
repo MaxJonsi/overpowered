@@ -27,7 +27,7 @@ public class JudgementCutEndEntity extends EffectEntity {
         if (!(level() instanceof ServerLevel level)) return;
 
         if (tickCount == 1) {
-            level.playSound(null, getX(), getY(), getZ(), ModSounds.YAMATO_JUDGEMENT_END.get(), SoundSource.PLAYERS, 5f, 1f);
+            level.playSound(null, getX(), getY(), getZ(), ModSounds.YAMATO_JUDGEMENT_END, SoundSource.PLAYERS, 5f, 1f);
             for (LivingEntity target : victims(level)) {
                 target.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 130, 0));
                 target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 110, 3));
@@ -58,7 +58,7 @@ public class JudgementCutEndEntity extends EffectEntity {
                 }
             }
             if (tickCount % 8 == 0) {
-                level.playSound(null, getX(), getY(), getZ(), ModSounds.YAMATO_SLICE.get(), SoundSource.PLAYERS,
+                level.playSound(null, getX(), getY(), getZ(), ModSounds.YAMATO_SLICE, SoundSource.PLAYERS,
                         2f, 0.8f + random.nextFloat() * 0.6f);
             }
         }
@@ -80,7 +80,7 @@ public class JudgementCutEndEntity extends EffectEntity {
                             getX() + ring * Math.cos(angle), getY() + 1.5, getZ() + ring * Math.sin(angle), 1, 0, 0, 0, 0);
                 }
             }
-            level.playSound(null, getX(), getY(), getZ(), ModSounds.MAGIC_EXPLOSION.get(), SoundSource.PLAYERS, 4f, 0.7f);
+            level.playSound(null, getX(), getY(), getZ(), ModSounds.MAGIC_EXPLOSION, SoundSource.PLAYERS, 4f, 0.7f);
         }
 
         if (tickCount >= 130) discard();

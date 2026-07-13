@@ -29,6 +29,10 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
+import java.util.function.Consumer;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import com.maxjonsi.overpowered.client.render.RocketLauncherRenderer;
+import software.bernie.geckolib.animatable.client.GeoRenderProvider;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
@@ -73,6 +77,19 @@ public class RocketLauncherItem extends Item implements GeoItem {
     }
 
     @Override
+    public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
+        consumer.accept(new GeoRenderProvider() {
+            private RocketLauncherRenderer renderer;
+
+            @Override
+            public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
+                if (renderer == null) renderer = new RocketLauncherRenderer();
+                return renderer;
+            }
+        });
+    }
+
+    @Override
     public int getUseDuration(ItemStack stack, LivingEntity entity) {
         return 72000;
     }
@@ -85,7 +102,7 @@ public class RocketLauncherItem extends Item implements GeoItem {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        int mode = stack.getOrDefault(ModDataComponents.MODE.get(), MODE_HOMING);
+        int mode = stack.getOrDefault(ModDataComponents.MODE, MODE_HOMING);
 
         if (mode == MODE_LASER) {
             player.startUsingItem(hand);
@@ -106,19 +123,19 @@ public class RocketLauncherItem extends Item implements GeoItem {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
 
-        HomingRocketEntity rocket = new HomingRocketEntity(ModEntities.HOMING_ROCKET.get(), level);
+        HomingRocketEntity rocket = new HomingRocketEntity(ModEntities.HOMING_ROCKET, level);
         rocket.setOwner(player);
         Vec3 spawn = eye.add(look.scale(1.2)).subtract(0, 0.2, 0);
         rocket.setPos(spawn.x, spawn.y, spawn.z);
         rocket.setDeltaMovement(look.scale(1.4));
 
-        UUID targetId = stack.get(ModDataComponents.TARGET.get());
+        UUID targetId = stack.get(ModDataComponents.TARGET);
         if (targetId != null && level.getEntity(targetId) instanceof LivingEntity target && target.isAlive()) {
             rocket.setTargetId(target.getId());
         }
         level.addFreshEntity(rocket);
 
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_FIRE.get(), SoundSource.PLAYERS, 1.5f, 1f);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_FIRE, SoundSource.PLAYERS, 1.5f, 1f);
         triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "fire");
         player.getCooldowns().addCooldown(this, 15);
     }
@@ -131,11 +148,11 @@ public class RocketLauncherItem extends Item implements GeoItem {
 
         Vec3 target = hit.getLocation();
         double spawnY = Math.min(level.getMaxBuildHeight() - 12, target.y + 90);
-        NukeEntity nuke = new NukeEntity(ModEntities.NUKE.get(), level);
+        NukeEntity nuke = new NukeEntity(ModEntities.NUKE, level);
         nuke.setPos(target.x, spawnY, target.z);
         level.addFreshEntity(nuke);
 
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_FIRE.get(), SoundSource.PLAYERS, 1.5f, 0.7f);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_FIRE, SoundSource.PLAYERS, 1.5f, 0.7f);
         triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "fire");
         player.displayClientMessage(Component.translatable(MODE_KEYS[MODE_NUKE]), true);
         player.getCooldowns().addCooldown(this, 1200);
@@ -144,7 +161,7 @@ public class RocketLauncherItem extends Item implements GeoItem {
     @Override
     public void onUseTick(Level level, LivingEntity living, ItemStack stack, int remaining) {
         if (!(level instanceof ServerLevel serverLevel) || !(living instanceof ServerPlayer player)) return;
-        if (stack.getOrDefault(ModDataComponents.MODE.get(), MODE_HOMING) != MODE_LASER) return;
+        if (stack.getOrDefault(ModDataComponents.MODE, MODE_HOMING) != MODE_LASER) return;
 
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
@@ -184,16 +201,16 @@ public class RocketLauncherItem extends Item implements GeoItem {
         serverLevel.sendParticles(ParticleTypes.FLAME, beamEnd.x, beamEnd.y, beamEnd.z, 5, 0.2, 0.2, 0.2, 0.01);
 
         if (player.tickCount % 18 == 0) {
-            serverLevel.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_LASER.get(), SoundSource.PLAYERS, 0.8f, 1f);
+            serverLevel.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_LASER, SoundSource.PLAYERS, 0.8f, 1f);
             triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "laser");
         }
     }
 
     public void cycleMode(ServerPlayer player, ItemStack stack) {
-        int mode = (stack.getOrDefault(ModDataComponents.MODE.get(), MODE_HOMING) + 1) % 3;
-        stack.set(ModDataComponents.MODE.get(), mode);
+        int mode = (stack.getOrDefault(ModDataComponents.MODE, MODE_HOMING) + 1) % 3;
+        stack.set(ModDataComponents.MODE, mode);
         ServerLevel level = player.serverLevel();
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_MODE.get(), SoundSource.PLAYERS, 1f, 1f);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_MODE, SoundSource.PLAYERS, 1f, 1f);
         triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "mode");
         player.displayClientMessage(Component.translatable(MODE_KEYS[mode]), true);
     }
@@ -205,8 +222,8 @@ public class RocketLauncherItem extends Item implements GeoItem {
         EntityHitResult hit = ProjectileUtil.getEntityHitResult(level, player, eye, end,
                 new AABB(eye, end).inflate(1.5), e -> e instanceof LivingEntity && e != player && e.isAlive());
         if (hit != null) {
-            stack.set(ModDataComponents.TARGET.get(), hit.getEntity().getUUID());
-            level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_LOCK.get(), SoundSource.PLAYERS, 1f, 1f);
+            stack.set(ModDataComponents.TARGET, hit.getEntity().getUUID());
+            level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_LOCK, SoundSource.PLAYERS, 1f, 1f);
             player.displayClientMessage(Component.translatable("message.overpowered.marked", hit.getEntity().getDisplayName()), true);
         }
     }

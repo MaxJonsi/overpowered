@@ -1,6 +1,6 @@
 # Overpowered
 
-Мод для Minecraft 1.21.1 (NeoForge): суперспособности, анимированное оружие, мобы, магия и постройки. Кастомные 3D-модели и анимации на [GeckoLib](https://github.com/bernie-g/geckolib).
+Мод для Minecraft 1.21.1 (Fabric): суперспособности, анимированное оружие, мобы, магия и постройки. Кастомные 3D-модели и анимации на [GeckoLib](https://github.com/bernie-g/geckolib).
 
 ## Контент
 
@@ -40,13 +40,14 @@
 
 ## Установка
 
-1. Установить [NeoForge](https://neoforged.net/) для Minecraft 1.21.1
-2. Скачать [GeckoLib](https://modrinth.com/mod/geckolib/versions?g=1.21.1&l=neoforge) для NeoForge 1.21.1
-3. Положить оба jar-файла в папку `mods`
+1. Установить [Fabric Loader](https://fabricmc.net/use/installer/) для Minecraft 1.21.1
+2. Скачать [Fabric API](https://modrinth.com/mod/fabric-api/versions?g=1.21.1) для 1.21.1
+3. Скачать [GeckoLib](https://modrinth.com/mod/geckolib/versions?g=1.21.1&l=fabric) для Fabric 1.21.1
+4. Положить все три jar-файла (fabric-api, geckolib, overpowered) в папку `mods`
 
 ## Стек
 
-- Minecraft 1.21.1, NeoForge 21.1.235
+- Minecraft 1.21.1, Fabric Loader + Fabric API
 - GeckoLib 4.9.2 (анимации, 3D-модели)
-- Java 21, Gradle (ModDevGradle)
+- Java 21, Gradle (Fabric Loom, маппинги Mojang)
 - Модели и анимации в формате Blockbench (geo.json / animation.json)

@@ -67,7 +67,7 @@ public class DomainEntity extends EffectEntity {
         }
 
         if (tickCount >= LIFETIME || (tickCount % 20 == 0 && getOwnerPlayer() == null)) {
-            level.playSound(null, getX(), getY(), getZ(), ModSounds.MAGIC_FORCEFIELD.get(), SoundSource.MASTER, 4f, 0.6f);
+            level.playSound(null, getX(), getY(), getZ(), ModSounds.MAGIC_FORCEFIELD, SoundSource.MASTER, 4f, 0.6f);
             discard();
         }
     }

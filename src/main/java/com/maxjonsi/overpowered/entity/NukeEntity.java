@@ -70,7 +70,7 @@ public class NukeEntity extends Entity implements GeoEntity {
         setInvisible(true);
         setDeltaMovement(Vec3.ZERO);
 
-        level.playSound(null, getX(), getY(), getZ(), ModSounds.LAUNCHER_NUKE.get(), SoundSource.MASTER, 16f, 0.8f);
+        level.playSound(null, getX(), getY(), getZ(), ModSounds.LAUNCHER_NUKE, SoundSource.MASTER, 16f, 0.8f);
         level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY(), getZ(), 20, 8, 4, 8, 0);
         level.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2, getZ(), 3, 0, 0, 0, 0);
     }

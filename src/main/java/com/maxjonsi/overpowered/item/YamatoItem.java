@@ -32,7 +32,10 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
-import org.jetbrains.annotations.Nullable;
+import java.util.function.Consumer;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import com.maxjonsi.overpowered.client.render.YamatoRenderer;
+import software.bernie.geckolib.animatable.client.GeoRenderProvider;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
@@ -78,6 +81,19 @@ public class YamatoItem extends Item implements GeoItem {
     }
 
     @Override
+    public void createGeoRenderer(Consumer<GeoRenderProvider> consumer) {
+        consumer.accept(new GeoRenderProvider() {
+            private YamatoRenderer renderer;
+
+            @Override
+            public BlockEntityWithoutLevelRenderer getGeoItemRenderer() {
+                if (renderer == null) renderer = new YamatoRenderer();
+                return renderer;
+            }
+        });
+    }
+
+    @Override
     public int getUseDuration(ItemStack stack, LivingEntity entity) {
         return 72000;
     }
@@ -94,8 +110,8 @@ public class YamatoItem extends Item implements GeoItem {
             player.startUsingItem(hand);
             if (level instanceof ServerLevel serverLevel) {
                 triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "sheath");
-                level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.YAMATO_SHEATH.get(), SoundSource.PLAYERS, 1.2f, 1f);
-                level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.BURY_THE_LIGHT.get(), SoundSource.RECORDS, 4f, 1f);
+                level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.YAMATO_SHEATH, SoundSource.PLAYERS, 1.2f, 1f);
+                level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.BURY_THE_LIGHT, SoundSource.RECORDS, 4f, 1f);
             }
             return InteractionResultHolder.consume(stack);
         }
@@ -113,7 +129,7 @@ public class YamatoItem extends Item implements GeoItem {
                 target = hit.position().add(0, hit.getBbHeight() / 2, 0);
             }
 
-            JudgementCutEntity cut = new JudgementCutEntity(ModEntities.JUDGEMENT_CUT.get(), level);
+            JudgementCutEntity cut = new JudgementCutEntity(ModEntities.JUDGEMENT_CUT, level);
             cut.setOwnerId(player.getUUID());
             cut.setPos(target);
             serverLevel.addFreshEntity(cut);
@@ -132,7 +148,7 @@ public class YamatoItem extends Item implements GeoItem {
             player.stopUsingItem();
             triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "unleash");
 
-            JudgementCutEndEntity end = new JudgementCutEndEntity(ModEntities.JUDGEMENT_CUT_END.get(), level);
+            JudgementCutEndEntity end = new JudgementCutEndEntity(ModEntities.JUDGEMENT_CUT_END, level);
             end.setOwnerId(player.getUUID());
             end.setPos(player.position());
             serverLevel.addFreshEntity(end);
@@ -149,16 +165,24 @@ public class YamatoItem extends Item implements GeoItem {
         }
     }
 
-    public static void comboSwing(ServerPlayer player, ItemStack stack, @Nullable Entity primaryTarget) {
+    public static void comboSwing(ServerPlayer player, ItemStack stack) {
         ServerLevel level = player.serverLevel();
         long now = level.getGameTime();
         long[] combo = COMBO.computeIfAbsent(player.getUUID(), k -> new long[]{-1, 0});
+        if (now - combo[1] < 5 && combo[0] >= 0) return;
+
+        Vec3 pickEye = player.getEyePosition();
+        Vec3 pickEnd = pickEye.add(player.getLookAngle().scale(4.5));
+        EntityHitResult picked = ProjectileUtil.getEntityHitResult(level, player, pickEye, pickEnd,
+                new AABB(pickEye, pickEnd).inflate(0.5), e -> e instanceof LivingEntity && e != player && e.isAlive());
+        Entity primaryTarget = picked != null ? picked.getEntity() : null;
+
         int stage = (now - combo[1] < 14) ? (int) ((combo[0] + 1) % 3) : 0;
         combo[0] = stage;
         combo[1] = now;
 
         ((YamatoItem) stack.getItem()).triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "slash_" + (stage + 1));
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.YAMATO_WHOOSH.get(), SoundSource.PLAYERS, 1f, 0.9f + stage * 0.15f);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.YAMATO_WHOOSH, SoundSource.PLAYERS, 1f, 0.9f + stage * 0.15f);
 
         Vec3 look = player.getLookAngle();
         Vec3 center = player.position().add(look.scale(2.5)).add(0, 1, 0);
@@ -197,7 +221,7 @@ public class YamatoItem extends Item implements GeoItem {
             level.sendParticles(ParticleTypes.SWEEP_ATTACK, p.x, p.y, p.z, 1, 0.3, 0.3, 0.3, 0);
             level.sendParticles(ParticleTypes.CLOUD, p.x, p.y, p.z, 2, 0.2, 0.2, 0.2, 0.01);
         }
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.YAMATO_DASH.get(), SoundSource.PLAYERS, 1.2f, 1f);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.YAMATO_DASH, SoundSource.PLAYERS, 1.2f, 1f);
         triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "dash");
     }
 }

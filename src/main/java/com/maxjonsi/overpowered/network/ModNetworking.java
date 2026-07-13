@@ -1,22 +1,15 @@
 package com.maxjonsi.overpowered.network;
 
 import com.maxjonsi.overpowered.server.ServerAbilityHandler;
-import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 
 public class ModNetworking {
-    public static void register(RegisterPayloadHandlersEvent event) {
-        PayloadRegistrar registrar = event.registrar("1");
+    public static void init() {
+        PayloadTypeRegistry.playC2S().register(AbilityActionPayload.TYPE, AbilityActionPayload.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(VoidStatePayload.TYPE, VoidStatePayload.STREAM_CODEC);
 
-        registrar.playToServer(AbilityActionPayload.TYPE, AbilityActionPayload.STREAM_CODEC, (payload, context) ->
-                context.enqueueWork(() -> {
-                    if (context.player() instanceof ServerPlayer player) {
-                        ServerAbilityHandler.handleAction(player, payload.action());
-                    }
-                }));
-
-        registrar.playToClient(VoidStatePayload.TYPE, VoidStatePayload.STREAM_CODEC, (payload, context) ->
-                context.enqueueWork(() -> ClientPayloadHandler.handleVoidState(payload)));
+        ServerPlayNetworking.registerGlobalReceiver(AbilityActionPayload.TYPE, (payload, context) ->
+                ServerAbilityHandler.handleAction(context.player(), payload.action()));
     }
 }

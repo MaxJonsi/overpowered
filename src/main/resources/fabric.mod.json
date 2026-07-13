@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "overpowered",
+  "version": "${version}",
+  "name": "Overpowered",
+  "description": "Superpowers, animated weapons, mobs, magic and structures. Custom 3D models and animations powered by GeckoLib.",
+  "authors": ["MaxJonsi"],
+  "contact": {
+    "sources": "https://github.com/MaxJonsi/overpowered",
+    "issues": "https://github.com/MaxJonsi/overpowered/issues"
+  },
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["com.maxjonsi.overpowered.Overpowered"],
+    "client": ["com.maxjonsi.overpowered.client.OverpoweredClient"]
+  },
+  "mixins": ["overpowered.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric-api": "*",
+    "minecraft": "1.21.1",
+    "java": ">=21",
+    "geckolib": ">=4.9"
+  }
+}

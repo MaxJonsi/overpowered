@@ -44,7 +44,7 @@ public class JudgementCutEntity extends EffectEntity {
                     new AABB(position(), position()).inflate(3.5), this::isVictim)) {
                 target.hurt(source, 12f);
             }
-            level.playSound(null, getX(), getY(), getZ(), ModSounds.YAMATO_SLICE.get(), SoundSource.PLAYERS,
+            level.playSound(null, getX(), getY(), getZ(), ModSounds.YAMATO_SLICE, SoundSource.PLAYERS,
                     1.5f, 1.3f - tickCount * 0.03f);
         }
 

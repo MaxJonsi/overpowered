@@ -49,7 +49,7 @@ public class SixEyesItem extends Item {
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
         }
 
-        int technique = stack.getOrDefault(ModDataComponents.TECHNIQUE.get(), TECH_BLUE);
+        int technique = stack.getOrDefault(ModDataComponents.TECHNIQUE, TECH_BLUE);
         switch (technique) {
             case TECH_BLUE -> castBlue(serverLevel, serverPlayer);
             case TECH_RED -> castRed(serverLevel, serverPlayer);
@@ -65,12 +65,12 @@ public class SixEyesItem extends Item {
         BlockHitResult hit = level.clip(new ClipContext(eye, eye.add(look.scale(18)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
         Vec3 center = hit.getType() == HitResult.Type.MISS ? eye.add(look.scale(14)) : hit.getLocation().subtract(look.scale(2));
 
-        BlueVortexEntity vortex = new BlueVortexEntity(ModEntities.BLUE_VORTEX.get(), level);
+        BlueVortexEntity vortex = new BlueVortexEntity(ModEntities.BLUE_VORTEX, level);
         vortex.setOwnerId(player.getUUID());
         vortex.setPos(center);
         level.addFreshEntity(vortex);
 
-        level.playSound(null, center.x, center.y, center.z, ModSounds.GOJO_BLUE.get(), SoundSource.PLAYERS, 2f, 1f);
+        level.playSound(null, center.x, center.y, center.z, ModSounds.GOJO_BLUE, SoundSource.PLAYERS, 2f, 1f);
         player.getCooldowns().addCooldown(this, 80);
     }
 
@@ -94,7 +94,7 @@ public class SixEyesItem extends Item {
             }
         }
         level.sendParticles(ParticleTypes.EXPLOSION, center.x, center.y, center.z, 3, 1, 1, 1, 0);
-        level.playSound(null, center.x, center.y, center.z, ModSounds.GOJO_RED.get(), SoundSource.PLAYERS, 2.5f, 1f);
+        level.playSound(null, center.x, center.y, center.z, ModSounds.GOJO_RED, SoundSource.PLAYERS, 2.5f, 1f);
         player.getCooldowns().addCooldown(this, 80);
     }
 
@@ -102,35 +102,35 @@ public class SixEyesItem extends Item {
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
 
-        HollowPurpleEntity purple = new HollowPurpleEntity(ModEntities.HOLLOW_PURPLE.get(), level);
+        HollowPurpleEntity purple = new HollowPurpleEntity(ModEntities.HOLLOW_PURPLE, level);
         purple.setOwnerId(player.getUUID());
         Vec3 spawn = eye.add(look.scale(2.5));
         purple.setPos(spawn.x, spawn.y, spawn.z);
         purple.setDeltaMovement(look.scale(1.2));
         level.addFreshEntity(purple);
 
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.GOJO_PURPLE.get(), SoundSource.PLAYERS, 3f, 1f);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.GOJO_PURPLE, SoundSource.PLAYERS, 3f, 1f);
         player.getCooldowns().addCooldown(this, 400);
     }
 
     private void castDomain(ServerLevel level, ServerPlayer player) {
         if (DomainEntity.getActive(player.getUUID()) != null) return;
 
-        DomainEntity domain = new DomainEntity(ModEntities.DOMAIN.get(), level);
+        DomainEntity domain = new DomainEntity(ModEntities.DOMAIN, level);
         domain.setOwnerId(player.getUUID());
         domain.setPos(player.position());
         level.addFreshEntity(domain);
 
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.GOJO_DOMAIN.get(), SoundSource.MASTER, 8f, 1f);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.GOJO_DOMAIN, SoundSource.MASTER, 8f, 1f);
         player.displayClientMessage(Component.translatable(TECH_KEYS[TECH_DOMAIN]), true);
         player.getCooldowns().addCooldown(this, 1800);
     }
 
     public void cycleTechnique(ServerPlayer player, ItemStack stack) {
-        int technique = (stack.getOrDefault(ModDataComponents.TECHNIQUE.get(), TECH_BLUE) + 1) % 4;
-        stack.set(ModDataComponents.TECHNIQUE.get(), technique);
+        int technique = (stack.getOrDefault(ModDataComponents.TECHNIQUE, TECH_BLUE) + 1) % 4;
+        stack.set(ModDataComponents.TECHNIQUE, technique);
         ServerLevel level = player.serverLevel();
-        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_MODE.get(), SoundSource.PLAYERS, 1f, 1.4f);
+        level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_MODE, SoundSource.PLAYERS, 1f, 1.4f);
         player.displayClientMessage(Component.translatable(TECH_KEYS[technique]), true);
     }
 }

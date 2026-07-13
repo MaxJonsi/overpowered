@@ -57,12 +57,12 @@ public class HollowPurpleEntity extends EffectEntity {
         level.sendParticles(ParticleTypes.END_ROD, getX(), getY(), getZ(), 3, 0.5, 0.5, 0.5, 0.02);
 
         if (tickCount % 10 == 0) {
-            level.playSound(null, getX(), getY(), getZ(), ModSounds.MAGIC_FORCEFIELD.get(), SoundSource.PLAYERS, 1.5f, 0.7f);
+            level.playSound(null, getX(), getY(), getZ(), ModSounds.MAGIC_FORCEFIELD, SoundSource.PLAYERS, 1.5f, 0.7f);
         }
 
         if (tickCount >= 90) {
             level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY(), getZ(), 2, 1, 1, 1, 0);
-            level.playSound(null, getX(), getY(), getZ(), ModSounds.MAGIC_EXPLOSION.get(), SoundSource.PLAYERS, 3f, 0.8f);
+            level.playSound(null, getX(), getY(), getZ(), ModSounds.MAGIC_EXPLOSION, SoundSource.PLAYERS, 3f, 0.8f);
             discard();
         }
     }
