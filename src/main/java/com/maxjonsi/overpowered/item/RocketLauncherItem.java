@@ -52,8 +52,9 @@ public class RocketLauncherItem extends Item implements GeoItem {
     private static final Map<UUID, LaserState> LASER = new HashMap<>();
 
     private static class LaserState {
-        BlockPos pos = BlockPos.ZERO;
-        int ticks;
+        BlockPos blockPos;
+        int blockTicks;
+        int firingTicks;
     }
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -105,6 +106,9 @@ public class RocketLauncherItem extends Item implements GeoItem {
         int mode = stack.getOrDefault(ModDataComponents.MODE, MODE_HOMING);
 
         if (mode == MODE_LASER) {
+            if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
+                beginLaser(serverLevel, serverPlayer, stack);
+            }
             player.startUsingItem(hand);
             return InteractionResultHolder.consume(stack);
         }
@@ -117,6 +121,13 @@ public class RocketLauncherItem extends Item implements GeoItem {
             }
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
+    }
+
+    private void beginLaser(ServerLevel level, ServerPlayer player, ItemStack stack) {
+        LASER.put(player.getUUID(), new LaserState());
+        level.playSound(null, player.getX(), player.getY(), player.getZ(),
+                ModSounds.LAUNCHER_LASER, SoundSource.PLAYERS, 0.8f, 1f);
+        triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "laser");
     }
 
     private void fireHomingRocket(ServerLevel level, ServerPlayer player, ItemStack stack) {
@@ -150,7 +161,11 @@ public class RocketLauncherItem extends Item implements GeoItem {
         double spawnY = Math.min(level.getMaxBuildHeight() - 12, target.y + 90);
         NukeEntity nuke = new NukeEntity(ModEntities.NUKE, level);
         nuke.setPos(target.x, spawnY, target.z);
-        level.addFreshEntity(nuke);
+        nuke.prepareForLaunch(level);
+        if (!level.addFreshEntity(nuke)) {
+            nuke.discard();
+            return;
+        }
 
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_FIRE, SoundSource.PLAYERS, 1.5f, 0.7f);
         triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "fire");
@@ -161,52 +176,84 @@ public class RocketLauncherItem extends Item implements GeoItem {
     @Override
     public void onUseTick(Level level, LivingEntity living, ItemStack stack, int remaining) {
         if (!(level instanceof ServerLevel serverLevel) || !(living instanceof ServerPlayer player)) return;
-        if (stack.getOrDefault(ModDataComponents.MODE, MODE_HOMING) != MODE_LASER) return;
+        if (stack.getOrDefault(ModDataComponents.MODE, MODE_HOMING) != MODE_LASER) {
+            LASER.remove(player.getUUID());
+            player.stopUsingItem();
+            return;
+        }
 
-        Vec3 eye = player.getEyePosition();
-        Vec3 look = player.getLookAngle();
-        Vec3 end = eye.add(look.scale(64));
-        BlockHitResult blockHit = serverLevel.clip(new ClipContext(eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
-        Vec3 beamEnd = blockHit.getType() == HitResult.Type.MISS ? end : blockHit.getLocation();
+        LaserState state = LASER.computeIfAbsent(player.getUUID(), ignored -> new LaserState());
+        LaserBeamHelper.Trace trace = LaserBeamHelper.trace(
+                serverLevel, player, player.getEyePosition(), player.getLookAngle());
 
-        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(serverLevel, player, eye, beamEnd,
-                new AABB(eye, beamEnd).inflate(0.6), e -> e instanceof LivingEntity && e != player && e.isAlive());
+        EntityHitResult entityHit = trace.entityHit();
         if (entityHit != null) {
             entityHit.getEntity().hurt(player.damageSources().indirectMagic(player, player), 4f);
             entityHit.getEntity().igniteForSeconds(2);
-            beamEnd = entityHit.getLocation();
-        } else if (blockHit.getType() == HitResult.Type.BLOCK) {
-            BlockPos pos = blockHit.getBlockPos();
-            LaserState state = LASER.computeIfAbsent(player.getUUID(), k -> new LaserState());
-            if (pos.equals(state.pos)) {
-                state.ticks++;
+            resetBlockProgress(state);
+        } else if (trace.blockHit() != null && trace.blockHit().getType() == HitResult.Type.BLOCK) {
+            BlockPos pos = trace.blockHit().getBlockPos();
+            if (pos.equals(state.blockPos)) {
+                state.blockTicks++;
             } else {
-                state.pos = pos.immutable();
-                state.ticks = 1;
+                state.blockPos = pos.immutable();
+                state.blockTicks = 1;
             }
-            if (state.ticks >= 2 && serverLevel.getBlockState(pos).getDestroySpeed(serverLevel, pos) >= 0) {
+            if (state.blockTicks >= 1 && serverLevel.getBlockState(pos).getDestroySpeed(serverLevel, pos) >= 0) {
                 serverLevel.destroyBlock(pos, false, player);
                 serverLevel.sendParticles(ParticleTypes.LAVA, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 4, 0.2, 0.2, 0.2, 0.02);
-                state.ticks = 0;
+                resetBlockProgress(state);
             }
+        } else {
+            resetBlockProgress(state);
         }
 
-        Vec3 dir = beamEnd.subtract(eye);
-        int length = (int) dir.length();
-        Vec3 dirN = dir.normalize();
-        for (int i = 2; i < length; i += 2) {
-            Vec3 p = eye.add(dirN.scale(i));
-            serverLevel.sendParticles(ParticleTypes.END_ROD, p.x, p.y, p.z, 1, 0.02, 0.02, 0.02, 0);
+        if (entityHit != null || trace.blockHit() != null && trace.blockHit().getType() == HitResult.Type.BLOCK) {
+            Vec3 impact = trace.end();
+            serverLevel.sendParticles(ParticleTypes.FLAME, impact.x, impact.y, impact.z, 5, 0.2, 0.2, 0.2, 0.01);
         }
-        serverLevel.sendParticles(ParticleTypes.FLAME, beamEnd.x, beamEnd.y, beamEnd.z, 5, 0.2, 0.2, 0.2, 0.01);
 
-        if (player.tickCount % 190 == 0) {
+        state.firingTicks++;
+        if (state.firingTicks % 190 == 0) {
             serverLevel.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_LASER, SoundSource.PLAYERS, 0.8f, 1f);
             triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "laser");
         }
     }
 
+    private static void resetBlockProgress(LaserState state) {
+        state.blockPos = null;
+        state.blockTicks = 0;
+    }
+
+    public static void clearTransientState(UUID playerId) {
+        LASER.remove(playerId);
+    }
+
+    public static void clearAllTransientState() {
+        LASER.clear();
+    }
+
+    @Override
+    public void releaseUsing(ItemStack stack, Level level, LivingEntity living, int timeCharged) {
+        if (living instanceof ServerPlayer player) {
+            LASER.remove(player.getUUID());
+        }
+        super.releaseUsing(stack, level, living, timeCharged);
+    }
+
+    @Override
+    public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity living) {
+        if (living instanceof ServerPlayer player) {
+            LASER.remove(player.getUUID());
+        }
+        return super.finishUsingItem(stack, level, living);
+    }
+
     public void cycleMode(ServerPlayer player, ItemStack stack) {
+        if (stack.getOrDefault(ModDataComponents.MODE, MODE_HOMING) == MODE_LASER) {
+            LASER.remove(player.getUUID());
+            if (player.isUsingItem()) player.stopUsingItem();
+        }
         int mode = (stack.getOrDefault(ModDataComponents.MODE, MODE_HOMING) + 1) % 3;
         stack.set(ModDataComponents.MODE, mode);
         ServerLevel level = player.serverLevel();

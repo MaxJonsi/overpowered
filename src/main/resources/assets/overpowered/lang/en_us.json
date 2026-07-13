@@ -14,8 +14,6 @@
   "key.categories.overpowered": "Overpowered",
   "key.overpowered.special": "Weapon Special / Mode",
   "key.overpowered.mark": "Mark Target",
-  "key.overpowered.void_kill": "Void: Erase",
-  "key.overpowered.void_toggle": "Void: Transform",
   "message.overpowered.mode.homing": "Mode: Homing Rockets",
   "message.overpowered.mode.nuke": "Mode: Nuclear Airstrike",
   "message.overpowered.mode.laser": "Mode: Annihilation Laser",
@@ -32,6 +30,8 @@
   "subtitles.overpowered.yamato.dash": "Rapid slash dash",
   "subtitles.overpowered.yamato.judgement_end": "Reality is cut apart",
   "subtitles.overpowered.launcher.fire": "Rocket launched",
+  "subtitles.overpowered.launcher.mode": "Launcher mode changes",
+  "subtitles.overpowered.launcher.lock": "Target acquired",
   "subtitles.overpowered.launcher.laser": "Annihilation beam hums",
   "subtitles.overpowered.launcher.nuke": "Nuclear detonation",
   "subtitles.overpowered.gojo.blue": "Blue attracts",
@@ -48,5 +48,6 @@
   "subtitles.overpowered.heavy_blaster.shoot": "Heavy Blaster fires",
   "item.overpowered.gojo_mask": "Gojo's Mask",
   "item.overpowered.void_orb": "Void Orb",
-  "subtitles.overpowered.launcher.siren": "Nuclear siren wails"
+  "subtitles.overpowered.launcher.siren": "Nuclear siren wails",
+  "message.overpowered.gojo.mask_required": "Put on Gojo's Mask"
 }

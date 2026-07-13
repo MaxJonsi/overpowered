@@ -1,7 +1,6 @@
 package com.maxjonsi.overpowered.entity;
 
 import com.maxjonsi.overpowered.registry.ModSounds;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -40,18 +39,6 @@ public class JudgementCutEndEntity extends EffectEntity {
                     ? level.damageSources().indirectMagic(owner, owner)
                     : level.damageSources().magic();
 
-            for (int i = 0; i < 14; i++) {
-                double angle = random.nextDouble() * Math.PI * 2;
-                double dist = random.nextDouble() * RADIUS;
-                double x = getX() + Math.cos(angle) * dist;
-                double z = getZ() + Math.sin(angle) * dist;
-                double y = getY() + random.nextDouble() * 5;
-                level.sendParticles(ParticleTypes.SWEEP_ATTACK, x, y, z, 1, 0, 0, 0, 0);
-                if (i % 3 == 0) {
-                    level.sendParticles(ParticleTypes.CRIT, x, y, z, 4, 0.5, 0.5, 0.5, 0.2);
-                }
-            }
-
             if (tickCount % 5 == 0) {
                 for (LivingEntity target : victims(level)) {
                     target.hurt(source, 10f);
@@ -72,13 +59,6 @@ public class JudgementCutEndEntity extends EffectEntity {
                 target.hurt(source, 25f);
                 target.setDeltaMovement(target.getDeltaMovement().add(0, 0.8, 0));
                 target.hurtMarked = true;
-            }
-            for (int ring = 4; ring <= 24; ring += 4) {
-                for (int i = 0; i < ring * 3; i++) {
-                    double angle = 2 * Math.PI * i / (ring * 3);
-                    level.sendParticles(ParticleTypes.SWEEP_ATTACK,
-                            getX() + ring * Math.cos(angle), getY() + 1.5, getZ() + ring * Math.sin(angle), 1, 0, 0, 0, 0);
-                }
             }
             level.playSound(null, getX(), getY(), getZ(), ModSounds.MAGIC_EXPLOSION, SoundSource.PLAYERS, 4f, 0.7f);
         }

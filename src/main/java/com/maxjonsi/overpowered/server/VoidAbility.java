@@ -13,22 +13,31 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 
-public class VoidAbility {
+public final class VoidAbility {
+    public static final double RANGE = 32;
+
+    private VoidAbility() {
+    }
+
     public static void toggle(ServerPlayer player) {
         boolean active = !VoidServerState.isActive(player.getUUID());
-        VoidServerState.set(player.getUUID(), active);
-
-        VoidStatePayload payload = new VoidStatePayload(player.getId(), active);
-        ServerPlayNetworking.send(player, payload);
-        for (ServerPlayer viewer : PlayerLookup.tracking(player)) {
-            ServerPlayNetworking.send(viewer, payload);
+        if (active) {
+            VoidServerState.activate(player);
+        } else {
+            VoidServerState.deactivate(player);
         }
+        broadcastState(player, active);
 
         ServerLevel level = player.serverLevel();
         level.sendParticles(ParticleTypes.LARGE_SMOKE, player.getX(), player.getY() + 1, player.getZ(), 40, 0.4, 0.8, 0.4, 0.02);
@@ -38,14 +47,11 @@ public class VoidAbility {
     }
 
     public static void kill(ServerPlayer player) {
-        if (!VoidServerState.isActive(player.getUUID())) return;
+        if (!VoidServerState.isActive(player.getUUID()) || !player.isAlive() || player.isSpectator()) return;
 
         ServerLevel level = player.serverLevel();
-        Vec3 eye = player.getEyePosition();
-        Vec3 end = eye.add(player.getLookAngle().scale(32));
-        EntityHitResult hit = ProjectileUtil.getEntityHitResult(level, player, eye, end,
-                new AABB(eye, end).inflate(1), e -> e instanceof LivingEntity && e != player && e.isAlive() && !e.isSpectator());
-        if (hit == null || !(hit.getEntity() instanceof LivingEntity victim)) return;
+        LivingEntity victim = findTarget(level, player);
+        if (victim == null) return;
 
         BlockPos ground = victim.blockPosition();
         for (int i = 0; i < 6 && level.getBlockState(ground.below()).isAir(); i++) {
@@ -65,5 +71,43 @@ public class VoidAbility {
         level.playSound(null, victim.getX(), victim.getY(), victim.getZ(), ModSounds.VOID_KILL, SoundSource.PLAYERS, 2f, 1f);
 
         victim.hurt(level.damageSources().genericKill(), Float.MAX_VALUE);
+    }
+
+    public static LivingEntity findTarget(Level level, Player player) {
+        if (!player.isAlive() || player.isSpectator()) return null;
+
+        Vec3 eye = player.getEyePosition();
+        Vec3 end = eye.add(player.getLookAngle().scale(RANGE));
+        HitResult blockHit = level.clip(new ClipContext(
+                eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+        if (blockHit.getType() != HitResult.Type.MISS) {
+            end = blockHit.getLocation();
+        }
+
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(level, player, eye, end,
+                new AABB(eye, end).inflate(1), entity -> entity != player && isValidTarget(entity));
+        return entityHit != null && entityHit.getEntity() instanceof LivingEntity living ? living : null;
+    }
+
+    public static void syncState(ServerPlayer player) {
+        broadcastState(player, VoidServerState.isActive(player.getUUID()));
+    }
+
+    public static void sendState(ServerPlayer subject, ServerPlayer viewer, boolean active) {
+        ServerPlayNetworking.send(viewer, new VoidStatePayload(subject.getId(), active));
+    }
+
+    private static boolean isValidTarget(Entity entity) {
+        return entity instanceof LivingEntity living
+                && living.isAlive()
+                && !living.isSpectator();
+    }
+
+    private static void broadcastState(ServerPlayer player, boolean active) {
+        VoidStatePayload payload = new VoidStatePayload(player.getId(), active);
+        ServerPlayNetworking.send(player, payload);
+        for (ServerPlayer viewer : PlayerLookup.tracking(player)) {
+            ServerPlayNetworking.send(viewer, payload);
+        }
     }
 }
