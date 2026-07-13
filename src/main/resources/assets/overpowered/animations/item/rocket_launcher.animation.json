@@ -1,0 +1,57 @@
+{
+	"format_version": "1.8.0",
+	"animations": {
+		"animation.overpowered.rocket_launcher.idle": {
+			"loop": true,
+			"animation_length": 3,
+			"bones": {
+				"root": {
+					"position": {"0.0": [0, 0, 0], "1.5": [0, 0.3, 0], "3.0": [0, 0, 0]}
+				}
+			}
+		},
+		"animation.overpowered.rocket_launcher.fire": {
+			"loop": false,
+			"animation_length": 0.6,
+			"bones": {
+				"root": {
+					"position": {
+						"0.0": {"vector": [0, 0, 0]},
+						"0.06": {"vector": [0, 1, 4], "easing": "easeOutQuad"},
+						"0.6": {"vector": [0, 0, 0], "easing": "easeOutElastic"}
+					},
+					"rotation": {
+						"0.0": {"vector": [0, 0, 0]},
+						"0.06": {"vector": [-12, 0, 0], "easing": "easeOutQuad"},
+						"0.6": {"vector": [0, 0, 0], "easing": "easeOutCubic"}
+					}
+				}
+			}
+		},
+		"animation.overpowered.rocket_launcher.mode": {
+			"loop": false,
+			"animation_length": 0.4,
+			"bones": {
+				"dial": {
+					"rotation": {
+						"0.0": [0, 0, 0],
+						"0.4": {"vector": [360, 0, 0], "easing": "easeOutCubic"}
+					}
+				}
+			},
+			"sound_effects": {"0.0": {"effect": "mode"}}
+		},
+		"animation.overpowered.rocket_launcher.laser": {
+			"loop": true,
+			"animation_length": 0.2,
+			"bones": {
+				"root": {
+					"position": {
+						"0.0": [0, 0, 0], "0.05": [0.15, 0.1, 0], "0.1": [-0.1, -0.15, 0],
+						"0.15": [0.1, -0.1, 0], "0.2": [0, 0, 0]
+					}
+				}
+			}
+		}
+	}
+}

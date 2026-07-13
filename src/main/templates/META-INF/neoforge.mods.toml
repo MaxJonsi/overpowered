@@ -14,6 +14,9 @@ Superpowers, animated weapons, mobs, magic and structures.
 Custom 3D models and animations powered by GeckoLib.
 '''
 
+[[mixins]]
+config="overpowered.mixins.json"
+
 [[dependencies.${mod_id}]]
     modId="neoforge"
     type="required"

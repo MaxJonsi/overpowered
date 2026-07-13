@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "package": "com.maxjonsi.overpowered.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "minVersion": "0.8",
+  "client": [
+    "PlayerRendererMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

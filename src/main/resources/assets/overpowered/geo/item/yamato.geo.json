@@ -1,0 +1,39 @@
+{
+	"format_version": "1.12.0",
+	"minecraft:geometry": [
+		{
+			"description": {
+				"identifier": "geometry.overpowered.yamato",
+				"texture_width": 64,
+				"texture_height": 64,
+				"visible_bounds_width": 4,
+				"visible_bounds_height": 3,
+				"visible_bounds_offset": [0, 0.5, 0]
+			},
+			"bones": [
+				{
+					"name": "root",
+					"pivot": [0, 0, 0]
+				},
+				{
+					"name": "handle_group",
+					"parent": "root",
+					"pivot": [0, 0, -1],
+					"cubes": [
+						{"origin": [-0.5, -0.5, -6], "size": [1, 1, 5], "uv": [0, 16]},
+						{"origin": [-1, -1, -1.5], "size": [2, 2, 1], "uv": [16, 16]},
+						{"origin": [-0.75, -0.75, -6.5], "size": [1.5, 1.5, 0.5], "uv": [24, 16]}
+					]
+				},
+				{
+					"name": "blade",
+					"parent": "root",
+					"pivot": [0, 0, 0],
+					"cubes": [
+						{"origin": [-0.25, -0.5, -0.5], "size": [0.5, 1, 14], "uv": [0, 0]}
+					]
+				}
+			]
+		}
+	]
+}

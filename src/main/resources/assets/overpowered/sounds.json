@@ -1,4 +1,109 @@
 {
+  "yamato.whoosh": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.yamato.whoosh",
+    "sounds": [
+      "overpowered:weapon/sword_whoosh_0",
+      "overpowered:weapon/sword_whoosh_1",
+      "overpowered:weapon/sword_whoosh_2"
+    ]
+  },
+  "yamato.slice": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.yamato.slice",
+    "sounds": [
+      "overpowered:weapon/judgement_slice_0",
+      "overpowered:weapon/judgement_slice_1"
+    ]
+  },
+  "yamato.sheath": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.yamato.sheath",
+    "sounds": ["overpowered:weapon/yamato_sheath"]
+  },
+  "yamato.dash": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.yamato.dash",
+    "sounds": ["overpowered:weapon/yamato_dash"]
+  },
+  "yamato.judgement_end": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.yamato.judgement_end",
+    "sounds": ["overpowered:weapon/judgement_end"]
+  },
+  "yamato.bury_the_light": {
+    "category": "record",
+    "sounds": [{"name": "overpowered:weapon/bury_the_light", "stream": true}]
+  },
+  "launcher.fire": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.launcher.fire",
+    "sounds": ["overpowered:weapon/rocket_launch"]
+  },
+  "launcher.mode": {
+    "category": "player",
+    "sounds": ["overpowered:weapon/mode_switch"]
+  },
+  "launcher.lock": {
+    "category": "player",
+    "sounds": ["overpowered:weapon/target_lock"]
+  },
+  "launcher.laser": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.launcher.laser",
+    "sounds": ["overpowered:weapon/laser_beam"]
+  },
+  "launcher.nuke": {
+    "category": "master",
+    "subtitle": "subtitles.overpowered.launcher.nuke",
+    "sounds": ["overpowered:weapon/nuke_boom"]
+  },
+  "gojo.blue": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.gojo.blue",
+    "sounds": ["overpowered:magic/gojo_blue"]
+  },
+  "gojo.red": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.gojo.red",
+    "sounds": ["overpowered:magic/gojo_red"]
+  },
+  "gojo.purple": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.gojo.purple",
+    "sounds": ["overpowered:magic/gojo_purple"]
+  },
+  "gojo.domain": {
+    "category": "master",
+    "subtitle": "subtitles.overpowered.gojo.domain",
+    "sounds": ["overpowered:magic/domain_expand"]
+  },
+  "void.kill": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.void.kill",
+    "sounds": ["overpowered:magic/void_kill"]
+  },
+  "impact.metal": {
+    "category": "neutral",
+    "subtitle": "subtitles.overpowered.impact.metal",
+    "sounds": [
+      "overpowered:weapon/impact_metal_0",
+      "overpowered:weapon/impact_metal_1"
+    ]
+  },
+  "magic.explosion": {
+    "category": "neutral",
+    "subtitle": "subtitles.overpowered.magic.explosion",
+    "sounds": ["overpowered:magic/explosion_0"]
+  },
+  "magic.forcefield": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.magic.forcefield",
+    "sounds": [
+      "overpowered:magic/forcefield_0",
+      "overpowered:magic/forcefield_1"
+    ]
+  },
   "plasma_blaster.shoot": {
     "category": "player",
     "subtitle": "subtitles.overpowered.plasma_blaster.shoot",
@@ -25,26 +130,5 @@
       "overpowered:weapon/heavy_shot_0",
       "overpowered:weapon/heavy_shot_1"
     ]
-  },
-  "impact.metal": {
-    "category": "neutral",
-    "subtitle": "subtitles.overpowered.impact.metal",
-    "sounds": [
-      "overpowered:weapon/impact_metal_0",
-      "overpowered:weapon/impact_metal_1"
-    ]
-  },
-  "magic.forcefield": {
-    "category": "player",
-    "subtitle": "subtitles.overpowered.magic.forcefield",
-    "sounds": [
-      "overpowered:magic/forcefield_0",
-      "overpowered:magic/forcefield_1"
-    ]
-  },
-  "magic.explosion": {
-    "category": "neutral",
-    "subtitle": "subtitles.overpowered.magic.explosion",
-    "sounds": ["overpowered:magic/explosion_0"]
   }
 }
