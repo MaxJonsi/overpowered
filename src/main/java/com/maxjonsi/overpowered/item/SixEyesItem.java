@@ -14,6 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -49,6 +50,11 @@ public class SixEyesItem extends Item {
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
         }
 
+        if (!hasRequiredMask(serverPlayer)) {
+            serverPlayer.displayClientMessage(Component.translatable("message.overpowered.gojo.mask_required"), true);
+            return InteractionResultHolder.fail(stack);
+        }
+
         int technique = stack.getOrDefault(ModDataComponents.TECHNIQUE, TECH_BLUE);
         switch (technique) {
             case TECH_BLUE -> castBlue(serverLevel, serverPlayer);
@@ -70,7 +76,6 @@ public class SixEyesItem extends Item {
         vortex.setPos(center);
         level.addFreshEntity(vortex);
 
-        level.playSound(null, center.x, center.y, center.z, ModSounds.GOJO_BLUE, SoundSource.PLAYERS, 2f, 1f);
         player.getCooldowns().addCooldown(this, 80);
     }
 
@@ -127,10 +132,19 @@ public class SixEyesItem extends Item {
     }
 
     public void cycleTechnique(ServerPlayer player, ItemStack stack) {
+        if (!hasRequiredMask(player)) {
+            player.displayClientMessage(Component.translatable("message.overpowered.gojo.mask_required"), true);
+            return;
+        }
+
         int technique = (stack.getOrDefault(ModDataComponents.TECHNIQUE, TECH_BLUE) + 1) % 4;
         stack.set(ModDataComponents.TECHNIQUE, technique);
         ServerLevel level = player.serverLevel();
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_MODE, SoundSource.PLAYERS, 1f, 1.4f);
         player.displayClientMessage(Component.translatable(TECH_KEYS[technique]), true);
+    }
+
+    private static boolean hasRequiredMask(Player player) {
+        return player.getItemBySlot(EquipmentSlot.HEAD).getItem() instanceof GojoMaskItem;
     }
 }

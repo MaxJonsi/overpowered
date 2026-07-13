@@ -8,7 +8,5 @@ public class ModKeyMappings {
 
     public static final KeyMapping SPECIAL = new KeyMapping("key.overpowered.special", GLFW.GLFW_KEY_R, CATEGORY);
     public static final KeyMapping MARK = new KeyMapping("key.overpowered.mark", GLFW.GLFW_KEY_H, CATEGORY);
-    public static final KeyMapping VOID_KILL = new KeyMapping("key.overpowered.void_kill", GLFW.GLFW_KEY_F, CATEGORY);
-    public static final KeyMapping VOID_TOGGLE = new KeyMapping("key.overpowered.void_toggle", GLFW.GLFW_KEY_V, CATEGORY);
     public static final KeyMapping HUD_TOGGLE = new KeyMapping("key.overpowered.hud_toggle", GLFW.GLFW_KEY_O, CATEGORY);
 }

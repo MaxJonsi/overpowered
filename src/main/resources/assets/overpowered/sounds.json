@@ -39,10 +39,12 @@
   },
   "launcher.mode": {
     "category": "player",
+    "subtitle": "subtitles.overpowered.launcher.mode",
     "sounds": ["overpowered:weapon/mode_switch"]
   },
   "launcher.lock": {
     "category": "player",
+    "subtitle": "subtitles.overpowered.launcher.lock",
     "sounds": ["overpowered:weapon/target_lock"]
   },
   "launcher.laser": {

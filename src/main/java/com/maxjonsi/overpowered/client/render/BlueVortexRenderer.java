@@ -35,13 +35,15 @@ public class BlueVortexRenderer extends EntityRenderer<BlueVortexEntity> {
     @Override
     public void render(BlueVortexEntity entity, float entityYaw, float partialTick,
                        PoseStack poseStack, MultiBufferSource bufferSource, int packedLight) {
-        float t = entity.tickCount + partialTick;
+        // entity charges at the owner for 10 warmup ticks before the vortex releases,
+        // then stays active for 50 ticks (see BlueVortexEntity)
+        float t = entity.tickCount + partialTick - 10f;
         float master = Math.min(1f, t / 5f) * Mth.clamp((50f - t) / 6f, 0f, 1f);
         if (master <= 0f) return;
 
         Quaternionf camRot = this.entityRenderDispatcher.cameraOrientation();
 
-        // damage pulses every 10 ticks
+        // damage pulses every 10 active ticks
         float sincePulse = t % 10f;
         float pulse = 1f + 0.3f * Math.max(0f, 1f - sincePulse / 3f);
 

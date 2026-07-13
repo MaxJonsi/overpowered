@@ -28,7 +28,7 @@ public class ShadowRemnantRenderer extends EntityRenderer<ShadowRemnantEntity> {
         poseStack.mulPose(Axis.XP.rotationDegrees(90));
 
         float half = entity.getSize() / 2f;
-        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+        VertexConsumer consumer = bufferSource.getBuffer(RenderType.entityTranslucent(TEXTURE));
         PoseStack.Pose pose = poseStack.last();
 
         vertex(consumer, pose, -half, -half, 0, 0, packedLight);

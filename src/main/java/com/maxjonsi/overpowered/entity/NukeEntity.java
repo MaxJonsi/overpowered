@@ -8,13 +8,16 @@ import org.joml.Vector3f;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.TicketType;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import software.bernie.geckolib.animatable.GeoEntity;
@@ -22,15 +25,33 @@ import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 public class NukeEntity extends Entity implements GeoEntity {
-    private static final int RADIUS = 50;
+    public static final int RADIUS = 100;
+    private static final int RADIUS_SQUARED = RADIUS * RADIUS;
+    private static final int MAX_VISITED_POSITIONS_PER_TICK = 20_000;
+    private static final int CENTER_TICKET_RADIUS = 2;
+    private static final int CHUNK_TICKET_RADIUS = 0;
+    private static final int TICKET_TIMEOUT_TICKS = 100;
+    private static final int TICKET_REFRESH_INTERVAL = 20;
+    private static final TicketType<UUID> NUKE_TICKET = TicketType.create(
+            "overpowered_nuke", Comparator.<UUID>naturalOrder(), TICKET_TIMEOUT_TICKS);
     private final AnimatableInstanceCache geoCache = GeckoLibUtil.createInstanceCache(this);
+    private final Set<Long> destructionChunkTickets = new HashSet<>();
 
     private boolean detonated;
     private BlockPos center = BlockPos.ZERO;
-    private int layerY;
+    private int cursorY;
+    private int cursorX;
+    private int cursorZ;
+    private boolean destructionComplete;
     private int lingerTicks;
     private int cloudTicks;
+    private ChunkPos anchorTicketChunk;
 
     public NukeEntity(EntityType<?> type, Level level) {
         super(type, level);
@@ -42,6 +63,7 @@ public class NukeEntity extends Entity implements GeoEntity {
         super.tick();
         if (!(level() instanceof ServerLevel level)) return;
 
+        maintainChunkTickets(level);
         if (!detonated) {
             if (tickCount == 1) {
                 level.playSound(null, getX(), getY(), getZ(), ModSounds.LAUNCHER_SIREN, SoundSource.MASTER, 12f, 1f);
@@ -61,11 +83,11 @@ public class NukeEntity extends Entity implements GeoEntity {
 
         cloudTicks++;
 
-        destroyLayers(level, 2);
+        destroyBlocks(level);
         spawnMushroomCloud(level);
         damageWave(level);
 
-        if (layerY < center.getY() - RADIUS) {
+        if (destructionComplete) {
             lingerTicks++;
             if (lingerTicks > 60) discard();
         }
@@ -74,34 +96,132 @@ public class NukeEntity extends Entity implements GeoEntity {
     private void detonate(ServerLevel level) {
         detonated = true;
         center = blockPosition();
-        layerY = center.getY() + RADIUS;
+        cursorY = center.getY() + RADIUS;
+        resetCursorForLayer();
+        destructionComplete = false;
         setInvisible(true);
         setDeltaMovement(Vec3.ZERO);
+        maintainChunkTickets(level);
 
         level.playSound(null, getX(), getY(), getZ(), ModSounds.LAUNCHER_NUKE, SoundSource.MASTER, 16f, 0.8f);
         level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY(), getZ(), 20, 8, 4, 8, 0);
         level.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2, getZ(), 3, 0, 0, 0, 0);
     }
 
-    private void destroyLayers(ServerLevel level, int layersPerTick) {
-        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+    public void prepareForLaunch(ServerLevel level) {
+        maintainChunkTickets(level);
+    }
+
+    private void destroyBlocks(ServerLevel level) {
+        BlockPos.MutableBlockPos blockCursor = new BlockPos.MutableBlockPos();
         BlockState air = Blocks.AIR.defaultBlockState();
-        for (int pass = 0; pass < layersPerTick && layerY >= center.getY() - RADIUS; pass++, layerY--) {
-            if (layerY <= level.getMinBuildHeight() || layerY >= level.getMaxBuildHeight()) continue;
-            int dy = layerY - center.getY();
-            int layerRadius = (int) Math.floor(Math.sqrt((double) RADIUS * RADIUS - (double) dy * dy));
-            int radiusSq = layerRadius * layerRadius;
-            for (int dx = -layerRadius; dx <= layerRadius; dx++) {
-                for (int dz = -layerRadius; dz <= layerRadius; dz++) {
-                    if (dx * dx + dz * dz > radiusSq) continue;
-                    cursor.set(center.getX() + dx, layerY, center.getZ() + dz);
-                    BlockState state = level.getBlockState(cursor);
-                    if (!state.isAir() && state.getDestroySpeed(level, cursor) >= 0) {
-                        level.setBlock(cursor, air, 2 | 16);
-                    }
-                }
+        int visited = 0;
+
+        while (!destructionComplete && visited < MAX_VISITED_POSITIONS_PER_TICK) {
+            int layerRadius = radiusAt(cursorY);
+            int y = cursorY;
+            int dx = cursorX;
+            int dz = cursorZ;
+
+            int dy = y - center.getY();
+            if (dx * dx + dy * dy + dz * dz > RADIUS_SQUARED
+                    || y < level.getMinBuildHeight() || y >= level.getMaxBuildHeight()) {
+                advanceCursor(layerRadius);
+                visited++;
+                continue;
+            }
+
+            blockCursor.set(center.getX() + dx, y, center.getZ() + dz);
+            LevelChunk chunk = getOrRequestChunk(level, blockCursor);
+            if (chunk == null) return;
+
+            advanceCursor(layerRadius);
+            visited++;
+            BlockState state = chunk.getBlockState(blockCursor);
+            if (!state.isAir() && state.getDestroySpeed(level, blockCursor) >= 0) {
+                level.setBlock(blockCursor, air, 2 | 16);
             }
         }
+
+        if (destructionComplete) {
+            releaseDestructionChunkTickets(level);
+        }
+    }
+
+    private LevelChunk getOrRequestChunk(ServerLevel level, BlockPos pos) {
+        int chunkX = pos.getX() >> 4;
+        int chunkZ = pos.getZ() >> 4;
+        long chunkKey = ChunkPos.asLong(chunkX, chunkZ);
+        if (destructionChunkTickets.add(chunkKey)) {
+            level.getChunkSource().addRegionTicket(
+                    NUKE_TICKET, new ChunkPos(chunkKey), CHUNK_TICKET_RADIUS, getUUID());
+        }
+        return level.getChunkSource().getChunkNow(chunkX, chunkZ);
+    }
+
+    private void maintainChunkTickets(ServerLevel level) {
+        ChunkPos desiredAnchor = new ChunkPos(detonated ? center : blockPosition());
+        if (anchorTicketChunk != null && !anchorTicketChunk.equals(desiredAnchor)) {
+            level.getChunkSource().removeRegionTicket(
+                    NUKE_TICKET, anchorTicketChunk, CENTER_TICKET_RADIUS, getUUID());
+            anchorTicketChunk = null;
+        }
+        if (anchorTicketChunk == null || tickCount % TICKET_REFRESH_INTERVAL == 0) {
+            level.getChunkSource().addRegionTicket(
+                    NUKE_TICKET, desiredAnchor, CENTER_TICKET_RADIUS, getUUID());
+            anchorTicketChunk = desiredAnchor;
+        }
+        if (tickCount % TICKET_REFRESH_INTERVAL != 0) return;
+
+        for (long chunkKey : destructionChunkTickets) {
+            level.getChunkSource().addRegionTicket(
+                    NUKE_TICKET, new ChunkPos(chunkKey), CHUNK_TICKET_RADIUS, getUUID());
+        }
+    }
+
+    private void releaseDestructionChunkTickets(ServerLevel level) {
+        for (long chunkKey : destructionChunkTickets) {
+            level.getChunkSource().removeRegionTicket(
+                    NUKE_TICKET, new ChunkPos(chunkKey), CHUNK_TICKET_RADIUS, getUUID());
+        }
+        destructionChunkTickets.clear();
+    }
+
+    private void releaseChunkTickets(ServerLevel level) {
+        releaseDestructionChunkTickets(level);
+        if (anchorTicketChunk == null) return;
+
+        level.getChunkSource().removeRegionTicket(
+                NUKE_TICKET, anchorTicketChunk, CENTER_TICKET_RADIUS, getUUID());
+        anchorTicketChunk = null;
+    }
+
+    private void advanceCursor(int layerRadius) {
+        cursorZ++;
+        if (cursorZ <= layerRadius) return;
+
+        cursorZ = -layerRadius;
+        cursorX++;
+        if (cursorX <= layerRadius) return;
+
+        cursorY--;
+        if (cursorY < center.getY() - RADIUS) {
+            destructionComplete = true;
+            return;
+        }
+        resetCursorForLayer();
+    }
+
+    private void resetCursorForLayer() {
+        int layerRadius = radiusAt(cursorY);
+        cursorX = -layerRadius;
+        cursorZ = -layerRadius;
+    }
+
+    private int radiusAt(int y) {
+        int dy = y - center.getY();
+        int radiusSquared = RADIUS_SQUARED - dy * dy;
+        return radiusSquared <= 0 ? 0 : (int) Math.floor(Math.sqrt(radiusSquared));
     }
 
     private void spawnMushroomCloud(ServerLevel level) {
@@ -162,19 +282,41 @@ public class NukeEntity extends Entity implements GeoEntity {
     @Override
     protected void readAdditionalSaveData(CompoundTag tag) {
         detonated = tag.getBoolean("Detonated");
-        layerY = tag.getInt("LayerY");
         if (tag.contains("CenterX")) {
             center = new BlockPos(tag.getInt("CenterX"), tag.getInt("CenterY"), tag.getInt("CenterZ"));
         }
+        cursorY = tag.contains("CursorY") ? tag.getInt("CursorY") : tag.getInt("LayerY");
+        if (tag.contains("CursorX")) {
+            cursorX = tag.getInt("CursorX");
+            cursorZ = tag.getInt("CursorZ");
+        } else if (detonated) {
+            resetCursorForLayer();
+        }
+        destructionComplete = tag.getBoolean("DestructionComplete");
+        lingerTicks = tag.getInt("LingerTicks");
+        cloudTicks = tag.getInt("CloudTicks");
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag tag) {
         tag.putBoolean("Detonated", detonated);
-        tag.putInt("LayerY", layerY);
         tag.putInt("CenterX", center.getX());
         tag.putInt("CenterY", center.getY());
         tag.putInt("CenterZ", center.getZ());
+        tag.putInt("CursorY", cursorY);
+        tag.putInt("CursorX", cursorX);
+        tag.putInt("CursorZ", cursorZ);
+        tag.putBoolean("DestructionComplete", destructionComplete);
+        tag.putInt("LingerTicks", lingerTicks);
+        tag.putInt("CloudTicks", cloudTicks);
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        if (level() instanceof ServerLevel serverLevel) {
+            releaseChunkTickets(serverLevel);
+        }
+        super.remove(reason);
     }
 
     @Override

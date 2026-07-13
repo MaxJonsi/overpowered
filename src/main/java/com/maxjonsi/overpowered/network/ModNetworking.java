@@ -8,6 +8,7 @@ public class ModNetworking {
     public static void init() {
         PayloadTypeRegistry.playC2S().register(AbilityActionPayload.TYPE, AbilityActionPayload.STREAM_CODEC);
         PayloadTypeRegistry.playS2C().register(VoidStatePayload.TYPE, VoidStatePayload.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(YamatoAnimationPayload.TYPE, YamatoAnimationPayload.STREAM_CODEC);
 
         ServerPlayNetworking.registerGlobalReceiver(AbilityActionPayload.TYPE, (payload, context) ->
                 ServerAbilityHandler.handleAction(context.player(), payload.action()));

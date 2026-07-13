@@ -8,6 +8,7 @@
 |---|---|---|
 | `geo/item/`, `geo/entity/` | 3D-модели (Blockbench, bedrock geometry) | `*.geo.json` |
 | `animations/item/`, `animations/entity/` | Keyframe-анимации | `*.animation.json` |
+| `player_animations/` | Двуручные позы и анимации игрока для Player Animator | `*.player_animation.json` |
 | `textures/item/`, `textures/entity/`, `textures/block/` | Текстуры | `*.png` |
 | `sounds/weapon/`, `sounds/magic/`, `sounds/mob/` | Звуки, моно ogg vorbis | `*.ogg` |
 | `sounds.json` | Реестр звуковых событий | JSON |
@@ -29,9 +30,11 @@ Minecraft требует ogg vorbis; для позиционного 3D-звук
 
 Каждое событие в `sounds.json` может иметь несколько файлов-вариантов, игра выбирает случайный (плюс небольшой случайный pitch задаётся в коде).
 
-## Готовые ассеты
+## Готовые ассеты и заготовки
 
 ### plasma_blaster (оружие)
+
+Визуальный прототип: ассеты готовы, но предмет пока не зарегистрирован в Java и не входит в игровой контент v0.4.0.
 
 - `geo/item/plasma_blaster.geo.json` — модель: корпус, ствол с дулом, энергоячейка (отдельная кость для анимации), прицел, рукоятка
 - `animations/item/plasma_blaster.animation.json` — idle (вращение ячейки, покачивание), shoot (отдача с easeOutElastic, вспышка ячейки), reload (наклон, извлечение и раскрутка ячейки)

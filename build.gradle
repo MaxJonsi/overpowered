@@ -7,6 +7,13 @@ group = project.maven_group
 
 repositories {
     maven {
+        name = 'KosmX Player Animator'
+        url = 'https://maven.kosmx.dev/'
+        content {
+            includeGroup('dev.kosmx.player-anim')
+        }
+    }
+    maven {
         name = 'GeckoLib'
         url 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
         content {
@@ -34,6 +41,7 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
     modImplementation "software.bernie.geckolib:geckolib-fabric-${project.minecraft_version}:${project.geckolib_version}"
+    include modImplementation("dev.kosmx.player-anim:player-animation-lib-fabric:${project.player_animator_version}")
 }
 
 processResources {

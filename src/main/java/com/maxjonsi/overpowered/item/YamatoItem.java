@@ -1,12 +1,18 @@
 package com.maxjonsi.overpowered.item;
 
+import com.maxjonsi.overpowered.client.render.YamatoRenderer;
 import com.maxjonsi.overpowered.entity.JudgementCutEndEntity;
 import com.maxjonsi.overpowered.entity.JudgementCutEntity;
+import com.maxjonsi.overpowered.network.YamatoAnimationPayload;
 import com.maxjonsi.overpowered.registry.ModEntities;
 import com.maxjonsi.overpowered.registry.ModSounds;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.function.Consumer;
+import net.fabricmc.fabric.api.networking.v1.PlayerLookup;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,6 +26,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
@@ -31,13 +38,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
-import java.util.function.Consumer;
-import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import com.maxjonsi.overpowered.client.render.YamatoRenderer;
-import software.bernie.geckolib.animatable.client.GeoRenderProvider;
 import software.bernie.geckolib.animatable.GeoItem;
 import software.bernie.geckolib.animatable.SingletonGeoAnimatable;
+import software.bernie.geckolib.animatable.client.GeoRenderProvider;
 import software.bernie.geckolib.animatable.instance.AnimatableInstanceCache;
 import software.bernie.geckolib.animation.AnimatableManager;
 import software.bernie.geckolib.animation.AnimationController;
@@ -110,6 +113,9 @@ public class YamatoItem extends Item implements GeoItem {
             player.startUsingItem(hand);
             if (level instanceof ServerLevel serverLevel) {
                 triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "sheath");
+                if (player instanceof ServerPlayer serverPlayer) {
+                    broadcastPlayerAnimation(serverPlayer, YamatoAnimationPayload.SHEATH);
+                }
                 level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.YAMATO_SHEATH, SoundSource.PLAYERS, 1.2f, 1f);
                 level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.BURY_THE_LIGHT, SoundSource.RECORDS, 4f, 1f);
             }
@@ -135,6 +141,9 @@ public class YamatoItem extends Item implements GeoItem {
             serverLevel.addFreshEntity(cut);
 
             triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "judgement_cut");
+            if (player instanceof ServerPlayer serverPlayer) {
+                broadcastPlayerAnimation(serverPlayer, YamatoAnimationPayload.JUDGEMENT_CUT);
+            }
             player.getCooldowns().addCooldown(this, 15);
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
@@ -147,6 +156,7 @@ public class YamatoItem extends Item implements GeoItem {
         if (held == 30) {
             player.stopUsingItem();
             triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "unleash");
+            broadcastPlayerAnimation(player, YamatoAnimationPayload.UNLEASH);
 
             JudgementCutEndEntity end = new JudgementCutEndEntity(ModEntities.JUDGEMENT_CUT_END, level);
             end.setOwnerId(player.getUUID());
@@ -162,6 +172,9 @@ public class YamatoItem extends Item implements GeoItem {
         int held = getUseDuration(stack, living) - timeLeft;
         if (held < 30 && level instanceof ServerLevel serverLevel && living instanceof Player player) {
             triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "unleash");
+            if (player instanceof ServerPlayer serverPlayer) {
+                broadcastPlayerAnimation(serverPlayer, YamatoAnimationPayload.UNLEASH);
+            }
         }
     }
 
@@ -182,6 +195,7 @@ public class YamatoItem extends Item implements GeoItem {
         combo[1] = now;
 
         ((YamatoItem) stack.getItem()).triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "slash_" + (stage + 1));
+        broadcastPlayerAnimation(player, YamatoAnimationPayload.SLASH_1 + stage);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.YAMATO_WHOOSH, SoundSource.PLAYERS, 1f, 0.9f + stage * 0.15f);
 
         Vec3 look = player.getLookAngle();
@@ -223,5 +237,26 @@ public class YamatoItem extends Item implements GeoItem {
         }
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.YAMATO_DASH, SoundSource.PLAYERS, 1.2f, 1f);
         triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "dash");
+        broadcastPlayerAnimation(player, YamatoAnimationPayload.DASH);
+    }
+
+    public static void clearTransientState(UUID playerId) {
+        COMBO.remove(playerId);
+        DASH_COOLDOWN.remove(playerId);
+    }
+
+    public static void clearAllTransientState() {
+        COMBO.clear();
+        DASH_COOLDOWN.clear();
+    }
+
+    private static void broadcastPlayerAnimation(ServerPlayer player, int animation) {
+        YamatoAnimationPayload payload = new YamatoAnimationPayload(player.getId(), animation);
+        ServerPlayNetworking.send(player, payload);
+        for (ServerPlayer observer : PlayerLookup.tracking(player)) {
+            if (observer != player) {
+                ServerPlayNetworking.send(observer, payload);
+            }
+        }
     }
 }
