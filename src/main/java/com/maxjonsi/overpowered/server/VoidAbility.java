@@ -52,6 +52,7 @@ public final class VoidAbility {
         ServerLevel level = player.serverLevel();
         LivingEntity victim = findTarget(level, player);
         if (victim == null) return;
+        if (!EnergyService.tryUse(player, com.maxjonsi.overpowered.AbilityCosts.VOID_ERASE)) return;
 
         BlockPos ground = victim.blockPosition();
         for (int i = 0; i < 6 && level.getBlockState(ground.below()).isAir(); i++) {

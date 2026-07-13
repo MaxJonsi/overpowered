@@ -112,6 +112,7 @@ public class ServerAbilityHandler {
                 if (main.getItem() instanceof YamatoItem yamato) yamato.dash(player, main);
                 else if (main.getItem() instanceof RocketLauncherItem launcher) launcher.cycleMode(player, main);
                 else if (main.getItem() instanceof SixEyesItem sixEyes) sixEyes.cycleTechnique(player, main);
+                else if (main.getItem() instanceof com.maxjonsi.overpowered.item.CyclingAbilityItem cycling) cycling.cycleAbility(player, main);
             }
             case AbilityActionPayload.MARK -> {
                 if (main.getItem() instanceof RocketLauncherItem launcher) launcher.markTarget(player, main);

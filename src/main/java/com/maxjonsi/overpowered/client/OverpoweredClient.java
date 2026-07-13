@@ -16,7 +16,9 @@ import com.maxjonsi.overpowered.client.render.ShadowRemnantRenderer;
 import com.maxjonsi.overpowered.client.render.SkyTearState;
 import com.maxjonsi.overpowered.item.YamatoItem;
 import com.maxjonsi.overpowered.network.AbilityActionPayload;
+import com.maxjonsi.overpowered.network.EnergyPayload;
 import com.maxjonsi.overpowered.network.VoidStatePayload;
+import net.minecraft.client.renderer.entity.WitherSkeletonRenderer;
 import com.maxjonsi.overpowered.registry.ModEntities;
 import com.maxjonsi.overpowered.server.VoidAbility;
 import net.fabricmc.api.ClientModInitializer;
@@ -54,6 +56,7 @@ public class OverpoweredClient implements ClientModInitializer {
         EntityRendererRegistry.register(ModEntities.JUDGEMENT_CUT_END, JudgementCutEndRenderer::new);
         EntityRendererRegistry.register(ModEntities.HOLLOW_PURPLE, HollowPurpleRenderer::new);
         EntityRendererRegistry.register(ModEntities.BLUE_VORTEX, BlueVortexRenderer::new);
+        EntityRendererRegistry.register(ModEntities.SHADOW_SOLDIER, WitherSkeletonRenderer::new);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
@@ -101,10 +104,14 @@ public class OverpoweredClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(VoidStatePayload.TYPE, (payload, context) ->
                 ClientVoidState.set(payload.entityId(), payload.active()));
 
+        ClientPlayNetworking.registerGlobalReceiver(EnergyPayload.TYPE, (payload, context) ->
+                ClientEnergyState.set(payload.energy(), payload.infinite()));
+
         ClientEntityEvents.ENTITY_UNLOAD.register((entity, level) -> ClientVoidState.remove(entity.getId()));
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> client.execute(() -> {
             ClientVoidState.clear();
             SkyTearState.clear();
+            ClientEnergyState.clear();
         }));
     }
 }

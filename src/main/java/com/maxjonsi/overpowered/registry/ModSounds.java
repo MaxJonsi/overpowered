@@ -24,6 +24,10 @@ public class ModSounds {
     public static final SoundEvent GOJO_DOMAIN = register("gojo.domain");
     public static final SoundEvent VOID_KILL = register("void.kill");
     public static final SoundEvent IMPACT_METAL = register("impact.metal");
+    public static final SoundEvent DIO_TIME_STOP = register("dio.time_stop");
+    public static final SoundEvent AIZEN_THEME = register("aizen.theme");
+    public static final SoundEvent SHADOW_ARISE = register("shadow.arise");
+    public static final SoundEvent SHADOW_PORTAL = register("shadow.portal");
     public static final SoundEvent MAGIC_EXPLOSION = register("magic.explosion");
     public static final SoundEvent MAGIC_FORCEFIELD = register("magic.forcefield");
 

@@ -124,6 +124,7 @@ public class RocketLauncherItem extends Item implements GeoItem {
     }
 
     private void beginLaser(ServerLevel level, ServerPlayer player, ItemStack stack) {
+        if (!com.maxjonsi.overpowered.server.EnergyService.tryUse(player, com.maxjonsi.overpowered.AbilityCosts.LAUNCHER_LASER)) return;
         LASER.put(player.getUUID(), new LaserState());
         level.playSound(null, player.getX(), player.getY(), player.getZ(),
                 ModSounds.LAUNCHER_LASER, SoundSource.PLAYERS, 0.8f, 1f);
@@ -131,6 +132,7 @@ public class RocketLauncherItem extends Item implements GeoItem {
     }
 
     private void fireHomingRocket(ServerLevel level, ServerPlayer player, ItemStack stack) {
+        if (!com.maxjonsi.overpowered.server.EnergyService.tryUse(player, com.maxjonsi.overpowered.AbilityCosts.LAUNCHER_HOMING)) return;
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
 
@@ -152,6 +154,7 @@ public class RocketLauncherItem extends Item implements GeoItem {
     }
 
     private void callNuclearStrike(ServerLevel level, ServerPlayer player, ItemStack stack) {
+        if (!com.maxjonsi.overpowered.server.EnergyService.tryUse(player, com.maxjonsi.overpowered.AbilityCosts.LAUNCHER_NUKE)) return;
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
         BlockHitResult hit = level.clip(new ClipContext(eye, eye.add(look.scale(300)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));

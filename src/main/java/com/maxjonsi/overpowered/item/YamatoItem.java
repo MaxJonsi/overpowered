@@ -1,8 +1,10 @@
 package com.maxjonsi.overpowered.item;
 
+import com.maxjonsi.overpowered.AbilityCosts;
 import com.maxjonsi.overpowered.client.render.YamatoRenderer;
 import com.maxjonsi.overpowered.entity.JudgementCutEndEntity;
 import com.maxjonsi.overpowered.entity.JudgementCutEntity;
+import com.maxjonsi.overpowered.server.EnergyService;
 import com.maxjonsi.overpowered.network.YamatoAnimationPayload;
 import com.maxjonsi.overpowered.registry.ModEntities;
 import com.maxjonsi.overpowered.registry.ModSounds;
@@ -123,6 +125,10 @@ public class YamatoItem extends Item implements GeoItem {
         }
 
         if (level instanceof ServerLevel serverLevel) {
+            if (player instanceof ServerPlayer serverPlayer
+                    && !EnergyService.tryUse(serverPlayer, AbilityCosts.YAMATO_JUDGEMENT_CUT)) {
+                return InteractionResultHolder.fail(stack);
+            }
             Vec3 eye = player.getEyePosition();
             Vec3 look = player.getLookAngle();
             Vec3 end = eye.add(look.scale(24));
@@ -155,6 +161,7 @@ public class YamatoItem extends Item implements GeoItem {
         int held = getUseDuration(stack, living) - remaining;
         if (held == 30) {
             player.stopUsingItem();
+            if (!EnergyService.tryUse(player, AbilityCosts.YAMATO_JCE)) return;
             triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "unleash");
             broadcastPlayerAnimation(player, YamatoAnimationPayload.UNLEASH);
 
@@ -163,7 +170,7 @@ public class YamatoItem extends Item implements GeoItem {
             end.setPos(player.position());
             serverLevel.addFreshEntity(end);
 
-            player.getCooldowns().addCooldown(this, 600);
+            player.getCooldowns().addCooldown(this, 100);
         }
     }
 
@@ -215,7 +222,8 @@ public class YamatoItem extends Item implements GeoItem {
         ServerLevel level = player.serverLevel();
         long now = level.getGameTime();
         Long last = DASH_COOLDOWN.get(player.getUUID());
-        if (last != null && now - last < 50) return;
+        if (last != null && now - last < 20) return;
+        if (!EnergyService.tryUse(player, AbilityCosts.YAMATO_DASH)) return;
         DASH_COOLDOWN.put(player.getUUID(), now);
 
         Vec3 look = player.getLookAngle();

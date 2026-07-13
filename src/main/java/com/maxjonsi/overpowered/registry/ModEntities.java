@@ -9,10 +9,13 @@ import com.maxjonsi.overpowered.entity.JudgementCutEndEntity;
 import com.maxjonsi.overpowered.entity.JudgementCutEntity;
 import com.maxjonsi.overpowered.entity.NukeEntity;
 import com.maxjonsi.overpowered.entity.ShadowRemnantEntity;
+import com.maxjonsi.overpowered.entity.ShadowSoldierEntity;
+import net.fabricmc.fabric.api.object.builder.v1.entity.FabricDefaultAttributeRegistry;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.entity.monster.WitherSkeleton;
 
 public class ModEntities {
     public static final EntityType<HomingRocketEntity> HOMING_ROCKET = register("homing_rocket",
@@ -47,10 +50,15 @@ public class ModEntities {
             EntityType.Builder.<DomainEntity>of(DomainEntity::new, MobCategory.MISC)
                     .sized(1.0f, 1.0f).clientTrackingRange(24).updateInterval(10).fireImmune().build("domain"));
 
+    public static final EntityType<ShadowSoldierEntity> SHADOW_SOLDIER = register("shadow_soldier",
+            EntityType.Builder.<ShadowSoldierEntity>of(ShadowSoldierEntity::new, MobCategory.MISC)
+                    .sized(0.7f, 2.4f).clientTrackingRange(10).fireImmune().build("shadow_soldier"));
+
     private static <T extends net.minecraft.world.entity.Entity> EntityType<T> register(String name, EntityType<T> type) {
         return Registry.register(BuiltInRegistries.ENTITY_TYPE, Overpowered.id(name), type);
     }
 
     public static void init() {
+        FabricDefaultAttributeRegistry.register(SHADOW_SOLDIER, WitherSkeleton.createAttributes());
     }
 }

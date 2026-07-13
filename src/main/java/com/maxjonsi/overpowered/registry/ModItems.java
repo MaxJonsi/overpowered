@@ -2,8 +2,12 @@ package com.maxjonsi.overpowered.registry;
 
 import com.maxjonsi.overpowered.Overpowered;
 import com.maxjonsi.overpowered.item.GojoMaskItem;
+import com.maxjonsi.overpowered.item.InfinityCoreItem;
+import com.maxjonsi.overpowered.item.KyokaSuigetsuItem;
 import com.maxjonsi.overpowered.item.RocketLauncherItem;
+import com.maxjonsi.overpowered.item.ShadowDaggerItem;
 import com.maxjonsi.overpowered.item.SixEyesItem;
+import com.maxjonsi.overpowered.item.StoneMaskItem;
 import com.maxjonsi.overpowered.item.VoidOrbItem;
 import com.maxjonsi.overpowered.item.YamatoItem;
 import net.minecraft.core.Registry;
@@ -26,6 +30,18 @@ public class ModItems {
 
     public static final VoidOrbItem VOID_ORB = register("void_orb",
             new VoidOrbItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
+
+    public static final StoneMaskItem STONE_MASK = register("stone_mask",
+            new StoneMaskItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
+
+    public static final KyokaSuigetsuItem KYOKA_SUIGETSU = register("kyoka_suigetsu",
+            new KyokaSuigetsuItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
+
+    public static final ShadowDaggerItem SHADOW_DAGGER = register("shadow_dagger",
+            new ShadowDaggerItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
+
+    public static final InfinityCoreItem INFINITY_CORE = register("infinity_core",
+            new InfinityCoreItem(new Item.Properties().stacksTo(1).rarity(Rarity.EPIC).fireResistant()));
 
     private static <T extends Item> T register(String name, T item) {
         return Registry.register(BuiltInRegistries.ITEM, Overpowered.id(name), item);

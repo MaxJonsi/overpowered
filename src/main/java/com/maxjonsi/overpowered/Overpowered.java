@@ -5,6 +5,7 @@ import com.maxjonsi.overpowered.registry.ModDataComponents;
 import com.maxjonsi.overpowered.registry.ModEntities;
 import com.maxjonsi.overpowered.registry.ModItems;
 import com.maxjonsi.overpowered.registry.ModSounds;
+import com.maxjonsi.overpowered.server.EnergyService;
 import com.maxjonsi.overpowered.server.ServerAbilityHandler;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.ModInitializer;
@@ -44,9 +45,14 @@ public class Overpowered implements ModInitializer {
                     output.accept(ModItems.SIX_EYES);
                     output.accept(ModItems.GOJO_MASK);
                     output.accept(ModItems.VOID_ORB);
+                    output.accept(ModItems.STONE_MASK);
+                    output.accept(ModItems.KYOKA_SUIGETSU);
+                    output.accept(ModItems.SHADOW_DAGGER);
+                    output.accept(ModItems.INFINITY_CORE);
                 }).build());
 
         ModNetworking.init();
         ServerAbilityHandler.init();
+        EnergyService.init();
     }
 }

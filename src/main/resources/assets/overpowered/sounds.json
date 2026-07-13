@@ -134,5 +134,24 @@
       "overpowered:weapon/heavy_shot_0",
       "overpowered:weapon/heavy_shot_1"
     ]
+  },
+  "dio.time_stop": {
+    "category": "master",
+    "subtitle": "subtitles.overpowered.dio.time_stop",
+    "sounds": ["overpowered:character/dio_time_stop"]
+  },
+  "aizen.theme": {
+    "category": "record",
+    "sounds": [{"name": "overpowered:character/aizen_theme", "stream": true}]
+  },
+  "shadow.arise": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.shadow.arise",
+    "sounds": ["overpowered:character/shadow_arise"]
+  },
+  "shadow.portal": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.shadow.portal",
+    "sounds": ["overpowered:character/shadow_portal"]
   }
 }

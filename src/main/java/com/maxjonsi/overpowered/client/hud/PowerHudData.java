@@ -3,7 +3,8 @@ package com.maxjonsi.overpowered.client.hud;
 import java.util.List;
 
 /**
- * Data contract for the legendary power HUD. Codex's energy system provides this; the HUD renders it.
+ * Data the legendary power HUD renders. Energy comes from the server via EnergyPayload;
+ * ability lists are defined per held item in LegendaryHudRenderer.
  */
 public interface PowerHudData {
 
@@ -19,5 +20,6 @@ public interface PowerHudData {
 
     boolean isInfinityCore();
 
-    record AbilityEntry(String name, float cost, boolean available, String keybind) {}
+    /** selected marks the ability the R key currently has armed (for cycling items). */
+    record AbilityEntry(String name, float cost, boolean available, String keybind, boolean selected) {}
 }

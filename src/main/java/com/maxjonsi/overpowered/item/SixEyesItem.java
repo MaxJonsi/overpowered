@@ -1,8 +1,10 @@
 package com.maxjonsi.overpowered.item;
 
+import com.maxjonsi.overpowered.AbilityCosts;
 import com.maxjonsi.overpowered.entity.BlueVortexEntity;
 import com.maxjonsi.overpowered.entity.DomainEntity;
 import com.maxjonsi.overpowered.entity.HollowPurpleEntity;
+import com.maxjonsi.overpowered.server.EnergyService;
 import com.maxjonsi.overpowered.registry.ModDataComponents;
 import com.maxjonsi.overpowered.registry.ModEntities;
 import com.maxjonsi.overpowered.registry.ModSounds;
@@ -66,6 +68,7 @@ public class SixEyesItem extends Item {
     }
 
     private void castBlue(ServerLevel level, ServerPlayer player) {
+        if (!EnergyService.tryUse(player, AbilityCosts.GOJO_BLUE)) return;
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
         BlockHitResult hit = level.clip(new ClipContext(eye, eye.add(look.scale(18)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
@@ -76,10 +79,11 @@ public class SixEyesItem extends Item {
         vortex.setPos(center);
         level.addFreshEntity(vortex);
 
-        player.getCooldowns().addCooldown(this, 80);
+        player.getCooldowns().addCooldown(this, 20);
     }
 
     private void castRed(ServerLevel level, ServerPlayer player) {
+        if (!EnergyService.tryUse(player, AbilityCosts.GOJO_RED)) return;
         Vec3 center = player.position().add(0, 1, 0);
         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(center, center).inflate(12),
                 e -> e != player && e.isAlive())) {
@@ -100,10 +104,11 @@ public class SixEyesItem extends Item {
         }
         level.sendParticles(ParticleTypes.EXPLOSION, center.x, center.y, center.z, 3, 1, 1, 1, 0);
         level.playSound(null, center.x, center.y, center.z, ModSounds.GOJO_RED, SoundSource.PLAYERS, 2.5f, 1f);
-        player.getCooldowns().addCooldown(this, 80);
+        player.getCooldowns().addCooldown(this, 20);
     }
 
     private void castPurple(ServerLevel level, ServerPlayer player) {
+        if (!EnergyService.tryUse(player, AbilityCosts.GOJO_PURPLE)) return;
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
 
@@ -115,11 +120,12 @@ public class SixEyesItem extends Item {
         level.addFreshEntity(purple);
 
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.GOJO_PURPLE, SoundSource.PLAYERS, 3f, 1f);
-        player.getCooldowns().addCooldown(this, 400);
+        player.getCooldowns().addCooldown(this, 30);
     }
 
     private void castDomain(ServerLevel level, ServerPlayer player) {
         if (DomainEntity.getActive(player.getUUID()) != null) return;
+        if (!EnergyService.tryUse(player, AbilityCosts.GOJO_DOMAIN)) return;
 
         DomainEntity domain = new DomainEntity(ModEntities.DOMAIN, level);
         domain.setOwnerId(player.getUUID());
@@ -128,7 +134,7 @@ public class SixEyesItem extends Item {
 
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.GOJO_DOMAIN, SoundSource.MASTER, 8f, 1f);
         player.displayClientMessage(Component.translatable(TECH_KEYS[TECH_DOMAIN]), true);
-        player.getCooldowns().addCooldown(this, 1800);
+        player.getCooldowns().addCooldown(this, 40);
     }
 
     public void cycleTechnique(ServerPlayer player, ItemStack stack) {
