@@ -48,5 +48,6 @@
   "subtitles.overpowered.heavy_blaster.shoot": "Heavy Blaster fires",
   "item.overpowered.gojo_mask": "Gojo's Mask",
   "item.overpowered.void_orb": "Void Orb",
-  "subtitles.overpowered.launcher.siren": "Nuclear siren wails"
+  "subtitles.overpowered.launcher.siren": "Nuclear siren wails",
+  "key.overpowered.hud_toggle": "Toggle Power HUD"
 }

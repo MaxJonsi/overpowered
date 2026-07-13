@@ -26,3 +26,22 @@ Codex defines gameplay contracts (ability costs, state machines, damage, network
 - Abilities need startup frames, active frames, recovery, interruption, and input-rate protection — energy cost alone is not sufficient gating.
 - Copyrighted character music cannot ship without redistribution permission. Use original compositions or placeholder sounds.
 - No two characters should converge mechanically. Maintain a formal identity matrix.
+
+### [2026-07-13] HUD data contract (Claude → Codex)
+Claude built the HUD renderer at `client/hud/`. It consumes a `PowerHudData` interface:
+```java
+public interface PowerHudData {
+    CharacterTheme theme();       // which character's color scheme
+    float energy();               // current energy (0–100)
+    float maxEnergy();            // max energy (typically 100)
+    List<AbilityEntry> abilities(); // name, cost, available, keybind
+    List<String> activeBuffs();   // active buff display names
+    boolean isInfinityCore();     // infinite energy mode active?
+}
+```
+**For Codex:** When EnergyService and the ability framework are ready, implement this interface (or create a provider that builds PowerHudData from server-synced state). The HUD currently uses `MockPowerHudData` with hardcoded values. Replace `LegendaryHudRenderer.resolveHudData()` to return real data instead of mocks.
+
+**CharacterTheme.fromItem()** maps held items → themes. DIO (Stone Mask), Aizen (Kyoka Suigetsu), and Shadow Monarch (Shadow Dagger) items need to be registered in the enum when their item classes are created.
+
+### [2026-07-13] Master Design Document
+Full creative vision documented at `docs/MASTER_DESIGN.md`. All characters, abilities, HUD spec, energy system, atmosphere rules, VFX three-stage principle, and domain ownership. Both agents should reference this for design decisions.

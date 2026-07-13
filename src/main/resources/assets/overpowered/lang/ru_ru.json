@@ -48,5 +48,6 @@
   "subtitles.overpowered.heavy_blaster.shoot": "Выстрел тяжёлого бластера",
   "item.overpowered.gojo_mask": "Маска Годжо",
   "item.overpowered.void_orb": "Сфера Пустоты",
-  "subtitles.overpowered.launcher.siren": "Вой ядерной сирены"
+  "subtitles.overpowered.launcher.siren": "Вой ядерной сирены",
+  "key.overpowered.hud_toggle": "Переключить HUD силы"
 }

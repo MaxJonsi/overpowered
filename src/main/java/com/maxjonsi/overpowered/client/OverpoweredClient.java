@@ -1,10 +1,15 @@
 package com.maxjonsi.overpowered.client;
 
+import com.maxjonsi.overpowered.client.hud.LegendaryHudRenderer;
+import com.maxjonsi.overpowered.client.render.BlueVortexRenderer;
 import com.maxjonsi.overpowered.client.render.DomainRenderer;
+import com.maxjonsi.overpowered.client.render.HollowPurpleRenderer;
 import com.maxjonsi.overpowered.client.render.HomingRocketRenderer;
-import com.maxjonsi.overpowered.client.render.NoopRenderer;
+import com.maxjonsi.overpowered.client.render.JudgementCutEndRenderer;
+import com.maxjonsi.overpowered.client.render.JudgementCutRenderer;
 import com.maxjonsi.overpowered.client.render.NukeRenderer;
 import com.maxjonsi.overpowered.client.render.ShadowRemnantRenderer;
+import com.maxjonsi.overpowered.client.render.SkyTearState;
 import com.maxjonsi.overpowered.item.YamatoItem;
 import com.maxjonsi.overpowered.network.AbilityActionPayload;
 import com.maxjonsi.overpowered.network.VoidStatePayload;
@@ -12,6 +17,7 @@ import com.maxjonsi.overpowered.registry.ModEntities;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.fabric.api.event.client.player.ClientPreAttackCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -24,15 +30,18 @@ public class OverpoweredClient implements ClientModInitializer {
         KeyBindingHelper.registerKeyBinding(ModKeyMappings.MARK);
         KeyBindingHelper.registerKeyBinding(ModKeyMappings.VOID_KILL);
         KeyBindingHelper.registerKeyBinding(ModKeyMappings.VOID_TOGGLE);
+        KeyBindingHelper.registerKeyBinding(ModKeyMappings.HUD_TOGGLE);
+
+        HudRenderCallback.EVENT.register(LegendaryHudRenderer::render);
 
         EntityRendererRegistry.register(ModEntities.HOMING_ROCKET, HomingRocketRenderer::new);
         EntityRendererRegistry.register(ModEntities.NUKE, NukeRenderer::new);
         EntityRendererRegistry.register(ModEntities.SHADOW_REMNANT, ShadowRemnantRenderer::new);
         EntityRendererRegistry.register(ModEntities.DOMAIN, DomainRenderer::new);
-        EntityRendererRegistry.register(ModEntities.JUDGEMENT_CUT, NoopRenderer::new);
-        EntityRendererRegistry.register(ModEntities.JUDGEMENT_CUT_END, NoopRenderer::new);
-        EntityRendererRegistry.register(ModEntities.HOLLOW_PURPLE, NoopRenderer::new);
-        EntityRendererRegistry.register(ModEntities.BLUE_VORTEX, NoopRenderer::new);
+        EntityRendererRegistry.register(ModEntities.JUDGEMENT_CUT, JudgementCutRenderer::new);
+        EntityRendererRegistry.register(ModEntities.JUDGEMENT_CUT_END, JudgementCutEndRenderer::new);
+        EntityRendererRegistry.register(ModEntities.HOLLOW_PURPLE, HollowPurpleRenderer::new);
+        EntityRendererRegistry.register(ModEntities.BLUE_VORTEX, BlueVortexRenderer::new);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (client.player == null) return;
@@ -48,6 +57,9 @@ public class OverpoweredClient implements ClientModInitializer {
             while (ModKeyMappings.VOID_TOGGLE.consumeClick()) {
                 ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.VOID_TOGGLE));
             }
+            while (ModKeyMappings.HUD_TOGGLE.consumeClick()) {
+                LegendaryHudRenderer.toggleVisibility();
+            }
         });
 
         ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
@@ -60,6 +72,9 @@ public class OverpoweredClient implements ClientModInitializer {
         ClientPlayNetworking.registerGlobalReceiver(VoidStatePayload.TYPE, (payload, context) ->
                 ClientVoidState.set(payload.entityId(), payload.active()));
 
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ClientVoidState.clear());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            ClientVoidState.clear();
+            SkyTearState.clear();
+        });
     }
 }
