@@ -6,7 +6,7 @@ Track PRs and their merge order here. Resolve conflicts before merging.
 
 | Priority | Branch | PR | Status | Conflicts |
 |---|---|---|---|---|
-| 1 | `codex-integration-ready` | — | Ready to push / open PR | Resolved; contains `cb925cb` and `2ca01ef` |
+| 1 | `codex-integration-ready` | — | Pushed; ready to open PR | Resolved; contains `cb925cb` and `2ca01ef` |
 | 2 | future `claude-*` visual polish | — | Rebase from final integration first | Must not reintroduce old `5c66be8` integration |
 
 `codex-5.6` is superseded for release purposes by `codex-integration-ready`. `main` remains untouched until the user merges a PR.
