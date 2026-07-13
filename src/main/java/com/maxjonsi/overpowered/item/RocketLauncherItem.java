@@ -5,6 +5,8 @@ import com.maxjonsi.overpowered.entity.NukeEntity;
 import com.maxjonsi.overpowered.registry.ModDataComponents;
 import com.maxjonsi.overpowered.registry.ModEntities;
 import com.maxjonsi.overpowered.registry.ModSounds;
+import com.maxjonsi.overpowered.server.PlayerEnergyManager;
+import com.maxjonsi.overpowered.server.NuclearAbilityManager;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -45,9 +47,24 @@ public class RocketLauncherItem extends Item implements GeoItem {
     public static final int MODE_HOMING = 0;
     public static final int MODE_NUKE = 1;
     public static final int MODE_LASER = 2;
+    public static final int MODE_MIRV = 3;
+    public static final int MODE_ORBITAL = 4;
+    public static final int MODE_APOCALYPSE = 5;
+
+    public static final int HOMING_COST = 8;
+    public static final int NUKE_COST = 80;
+    public static final int LASER_START_COST = 5;
+    public static final int LASER_TICK_COST = 1;
+    public static final int LASER_ENERGY_INTERVAL_TICKS = 5;
 
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.overpowered.rocket_launcher.idle");
-    private static final String[] MODE_KEYS = {"message.overpowered.mode.homing", "message.overpowered.mode.nuke", "message.overpowered.mode.laser"};
+    private static final String[] MODE_KEYS = {
+            "message.overpowered.mode.homing",
+            "message.overpowered.mode.nuke",
+            "message.overpowered.mode.laser",
+            "message.overpowered.mode.mirv",
+            "message.overpowered.mode.orbital",
+            "message.overpowered.mode.apocalypse"};
 
     private static final Map<UUID, LaserState> LASER = new HashMap<>();
 
@@ -107,6 +124,9 @@ public class RocketLauncherItem extends Item implements GeoItem {
 
         if (mode == MODE_LASER) {
             if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
+                if (!PlayerEnergyManager.tryConsumeOrNotify(serverPlayer, LASER_START_COST)) {
+                    return InteractionResultHolder.fail(stack);
+                }
                 beginLaser(serverLevel, serverPlayer, stack);
             }
             player.startUsingItem(hand);
@@ -114,10 +134,14 @@ public class RocketLauncherItem extends Item implements GeoItem {
         }
 
         if (level instanceof ServerLevel serverLevel && player instanceof ServerPlayer serverPlayer) {
-            if (mode == MODE_HOMING) {
-                fireHomingRocket(serverLevel, serverPlayer, stack);
-            } else {
-                callNuclearStrike(serverLevel, serverPlayer, stack);
+            switch (mode) {
+                case MODE_HOMING -> fireHomingRocket(serverLevel, serverPlayer, stack);
+                case MODE_NUKE -> callNuclearStrike(serverLevel, serverPlayer, stack);
+                case MODE_MIRV -> NuclearAbilityManager.mirv(serverPlayer, stack);
+                case MODE_ORBITAL -> NuclearAbilityManager.orbitalStrike(serverPlayer);
+                case MODE_APOCALYPSE -> NuclearAbilityManager.apocalypse(serverPlayer);
+                default -> {
+                }
             }
         }
         return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
@@ -131,6 +155,8 @@ public class RocketLauncherItem extends Item implements GeoItem {
     }
 
     private void fireHomingRocket(ServerLevel level, ServerPlayer player, ItemStack stack) {
+        if (!PlayerEnergyManager.tryConsumeOrNotify(player, HOMING_COST)) return;
+
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
 
@@ -156,6 +182,7 @@ public class RocketLauncherItem extends Item implements GeoItem {
         Vec3 look = player.getLookAngle();
         BlockHitResult hit = level.clip(new ClipContext(eye, eye.add(look.scale(300)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
         if (hit.getType() != HitResult.Type.BLOCK) return;
+        if (!PlayerEnergyManager.tryConsumeOrNotify(player, NUKE_COST)) return;
 
         Vec3 target = hit.getLocation();
         double spawnY = Math.min(level.getMaxBuildHeight() - 12, target.y + 90);
@@ -183,6 +210,14 @@ public class RocketLauncherItem extends Item implements GeoItem {
         }
 
         LaserState state = LASER.computeIfAbsent(player.getUUID(), ignored -> new LaserState());
+        state.firingTicks++;
+        if (state.firingTicks % LASER_ENERGY_INTERVAL_TICKS == 0
+                && !PlayerEnergyManager.tryConsumeOrNotify(player, LASER_TICK_COST)) {
+            LASER.remove(player.getUUID());
+            player.stopUsingItem();
+            return;
+        }
+
         LaserBeamHelper.Trace trace = LaserBeamHelper.trace(
                 serverLevel, player, player.getEyePosition(), player.getLookAngle());
 
@@ -213,7 +248,6 @@ public class RocketLauncherItem extends Item implements GeoItem {
             serverLevel.sendParticles(ParticleTypes.FLAME, impact.x, impact.y, impact.z, 5, 0.2, 0.2, 0.2, 0.01);
         }
 
-        state.firingTicks++;
         if (state.firingTicks % 190 == 0) {
             serverLevel.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_LASER, SoundSource.PLAYERS, 0.8f, 1f);
             triggerAnim(player, GeoItem.getOrAssignId(stack, serverLevel), "base", "laser");
@@ -254,7 +288,7 @@ public class RocketLauncherItem extends Item implements GeoItem {
             LASER.remove(player.getUUID());
             if (player.isUsingItem()) player.stopUsingItem();
         }
-        int mode = (stack.getOrDefault(ModDataComponents.MODE, MODE_HOMING) + 1) % 3;
+        int mode = (stack.getOrDefault(ModDataComponents.MODE, MODE_HOMING) + 1) % MODE_KEYS.length;
         stack.set(ModDataComponents.MODE, mode);
         ServerLevel level = player.serverLevel();
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_MODE, SoundSource.PLAYERS, 1f, 1f);

@@ -1,0 +1,21 @@
+# Codex status
+
+- Branch: `codex-5.6`
+- Completed: 2026-07-13
+- Current block: complete server-authoritative gameplay roster; ready for review and client visual integration.
+- Implemented domains:
+  - shared 0-100 energy, regeneration, costs, HUD snapshots, and five-minute Infinity Core state
+  - Yamato, Six Eyes/Gojo, Void, DIO, Aizen, Shadow Monarch, nuclear launcher, and Infinity Core mechanics
+  - generic ability-slot input routing and timed visual/audio event payloads
+  - new legendary items, scalable projectiles/explosions, bounded DIO rewind, radiation, shadow soldiers, and phased ultimates
+  - English/Russian messages and supplied reference audio converted to OGG and registered as sound events
+- Main touched paths: `server/`, `entity/`, `item/`, `network/`, `registry/`, language/sound resources, and `docs/agents/`.
+- Visual handoff: `docs/agents/codex-visual-handoff.md` contains packet IDs, phase timing, ability mappings, sound ownership, and remaining client work.
+- Out of scope and untouched: `client/render/`, `client/animation/`, `geo/`, `animations/`, and all shared build/client initializer files.
+- Reference audit: `work/reference-audit/` contains contact sheets, inventories, mechanics notes, conversion records, and validators. Original Desktop assets remain untouched.
+- Validation:
+  - verified Temurin JDK 21.0.11 `gradlew build`: successful
+  - 104 matching translation keys in each locale; 36 sound events; no missing sound files or duplicate keys
+  - all 21 supplied reference tracks decode successfully after conversion
+  - final dedicated-server smoke test loaded Minecraft 1.21.1, Fabric's 45-mod set, `overpowered 0.4.0`, and the complete registry without a mod initialization crash; it stopped at the untouched EULA gate
+- Git state: changes are local on `codex-5.6`; not committed, pushed, or opened as a PR.

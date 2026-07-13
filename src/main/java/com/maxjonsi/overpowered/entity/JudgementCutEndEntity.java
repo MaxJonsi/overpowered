@@ -56,7 +56,7 @@ public class JudgementCutEndEntity extends EffectEntity {
                     ? level.damageSources().indirectMagic(owner, owner)
                     : level.damageSources().magic();
             for (LivingEntity target : victims(level)) {
-                target.hurt(source, 25f);
+                target.hurt(source, 10000f);
                 target.setDeltaMovement(target.getDeltaMovement().add(0, 0.8, 0));
                 target.hurtMarked = true;
             }

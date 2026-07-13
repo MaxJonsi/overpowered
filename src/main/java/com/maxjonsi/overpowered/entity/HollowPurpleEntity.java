@@ -77,7 +77,7 @@ public class HollowPurpleEntity extends EffectEntity {
                     if (dx * dx + dy * dy + dz * dz > ERASE_RADIUS * ERASE_RADIUS) continue;
                     cursor.set(base.getX() + dx, base.getY() + dy, base.getZ() + dz);
                     BlockState state = level.getBlockState(cursor);
-                    if (!state.isAir() && state.getDestroySpeed(level, cursor) >= 0) {
+                    if (!state.isAir()) {
                         level.setBlock(cursor, air, 2 | 16);
                     }
                 }

@@ -11,7 +11,7 @@
   "yamato.slice": {
     "category": "player",
     "subtitle": "subtitles.overpowered.yamato.slice",
-    "sounds": ["overpowered:weapon/judgement_cut"]
+    "sounds": ["overpowered:reference/yamato/judgement_cut"]
   },
   "yamato.sheath": {
     "category": "player",
@@ -50,12 +50,12 @@
   "launcher.laser": {
     "category": "player",
     "subtitle": "subtitles.overpowered.launcher.laser",
-    "sounds": ["overpowered:weapon/laser_beam"]
+    "sounds": ["overpowered:reference/bazooka/laser_destruction"]
   },
   "launcher.nuke": {
     "category": "master",
     "subtitle": "subtitles.overpowered.launcher.nuke",
-    "sounds": ["overpowered:weapon/nuke_boom"]
+    "sounds": ["overpowered:reference/bazooka/nuke_bomb"]
   },
   "launcher.siren": {
     "category": "master",
@@ -65,27 +65,27 @@
   "gojo.blue": {
     "category": "player",
     "subtitle": "subtitles.overpowered.gojo.blue",
-    "sounds": ["overpowered:magic/gojo_blue"]
+    "sounds": ["overpowered:reference/gojo/red_blue"]
   },
   "gojo.red": {
     "category": "player",
     "subtitle": "subtitles.overpowered.gojo.red",
-    "sounds": ["overpowered:magic/gojo_red"]
+    "sounds": ["overpowered:reference/gojo/red_blue"]
   },
   "gojo.purple": {
     "category": "player",
     "subtitle": "subtitles.overpowered.gojo.purple",
-    "sounds": ["overpowered:magic/gojo_purple"]
+    "sounds": ["overpowered:reference/gojo/hollow_purple"]
   },
   "gojo.domain": {
     "category": "master",
     "subtitle": "subtitles.overpowered.gojo.domain",
-    "sounds": ["overpowered:magic/domain_expand"]
+    "sounds": ["overpowered:reference/gojo/domain_cast"]
   },
   "void.kill": {
     "category": "player",
     "subtitle": "subtitles.overpowered.void.kill",
-    "sounds": ["overpowered:magic/void_kill"]
+    "sounds": ["overpowered:reference/void/entity_destruction"]
   },
   "impact.metal": {
     "category": "neutral",
@@ -134,5 +134,60 @@
       "overpowered:weapon/heavy_shot_0",
       "overpowered:weapon/heavy_shot_1"
     ]
+  },
+  "yamato.rift": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.yamato.rift",
+    "sounds": ["overpowered:reference/yamato/portal"]
+  },
+  "yamato.sky_break": {
+    "category": "master",
+    "subtitle": "subtitles.overpowered.yamato.sky_break",
+    "sounds": ["overpowered:reference/yamato/sky_break"]
+  },
+  "yamato.final_music": {
+    "category": "record",
+    "sounds": [{"name": "overpowered:reference/yamato/final_music", "stream": true}]
+  },
+  "dio.time_stop": {
+    "category": "master",
+    "subtitle": "subtitles.overpowered.dio.time_stop",
+    "sounds": ["overpowered:reference/dio/time_stop"]
+  },
+  "aizen.theme": {
+    "category": "record",
+    "sounds": [{"name": "overpowered:reference/aizen/theme", "stream": true}]
+  },
+  "shadow.arise": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.shadow.arise",
+    "sounds": ["overpowered:reference/shadow/arise"]
+  },
+  "shadow.portal": {
+    "category": "player",
+    "subtitle": "subtitles.overpowered.shadow.portal",
+    "sounds": ["overpowered:reference/shadow/portal"]
+  },
+  "void.form_ambience": {
+    "category": "ambient",
+    "sounds": [{"name": "overpowered:reference/void/form_ambience", "stream": true}]
+  },
+  "void.absolute_ambience": {
+    "category": "ambient",
+    "sounds": [{"name": "overpowered:reference/void/absolute_ambience", "stream": true}]
+  },
+  "void.absolute_release": {
+    "category": "master",
+    "subtitle": "subtitles.overpowered.void.absolute_release",
+    "sounds": [{"name": "overpowered:reference/void/absolute_release", "stream": true}]
+  },
+  "launcher.nuke_fall": {
+    "category": "master",
+    "subtitle": "subtitles.overpowered.launcher.nuke_fall",
+    "sounds": [{"name": "overpowered:reference/bazooka/nuke_fall", "stream": true}]
+  },
+  "gojo.domain_interior": {
+    "category": "ambient",
+    "sounds": [{"name": "overpowered:reference/gojo/domain_interior", "stream": true}]
   }
 }
