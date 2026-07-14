@@ -6,7 +6,7 @@ Track PRs and their merge order here. Resolve conflicts before merging.
 
 | Priority | Branch | PR | Status | Conflicts |
 |---|---|---|---|---|
-| 1 | `codex-integration-ready` | — | Version 0.5.0 verified; ready to merge after push | Resolved; contains both agents plus the 2026-07-14 spec rework |
+| 1 | `codex-integration-ready` | — | Version 0.5.0 verified and pushed; ready to merge | Resolved; contains both agents plus the 2026-07-14 spec rework |
 | 2 | future `claude-*` visual polish | — | Rebase from final integration first | Must not reintroduce old `5c66be8` integration |
 
 `codex-5.6` is superseded for release purposes by `codex-integration-ready`. `main` remains untouched until the user merges a PR.
