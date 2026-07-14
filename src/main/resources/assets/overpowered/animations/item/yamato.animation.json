@@ -75,6 +75,22 @@
 				}
 			}
 		},
+		"animation.overpowered.yamato.slash_4": {
+			"loop": false,
+			"animation_length": 0.32,
+			"bones": {
+				"blade_assembly": {"position": {"0.0": [0, 0, -14.5], "0.25": [0, 0, -14.5], "0.32": [0, 0, 0]}},
+				"root": {"rotation": {"0.0": [0, 55, 35], "0.12": {"vector": [0, -58, -32], "easing": "easeOutQuint"}, "0.32": [0, 0, 0]}}
+			}
+		},
+		"animation.overpowered.yamato.slash_5": {
+			"loop": false,
+			"animation_length": 0.68,
+			"bones": {
+				"blade_assembly": {"position": {"0.0": [0, 0, -14.5], "0.12": {"vector": [0, 0, -2.5], "easing": "easeOutQuint"}, "0.5": [0, 0, -2.5], "0.68": [0, 0, 0]}},
+				"root": {"rotation": {"0.0": [0, -48, -35], "0.12": {"vector": [8, 30, 82], "easing": "easeOutQuint"}, "0.5": [8, 30, 82], "0.68": [0, 0, 0]}}
+			}
+		},
 		"animation.overpowered.yamato.judgement_cut": {
 			"loop": false,
 			"animation_length": 0.5,

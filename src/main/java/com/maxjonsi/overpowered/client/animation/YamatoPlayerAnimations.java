@@ -130,10 +130,14 @@ public final class YamatoPlayerAnimations {
             case YamatoAnimationPayload.SLASH_1 -> "yamato.slash_1";
             case YamatoAnimationPayload.SLASH_2 -> "yamato.slash_2";
             case YamatoAnimationPayload.SLASH_3 -> "yamato.slash_3";
+            case YamatoAnimationPayload.SLASH_4 -> "yamato.slash_4";
+            case YamatoAnimationPayload.SLASH_5 -> "yamato.slash_5";
             case YamatoAnimationPayload.JUDGEMENT_CUT -> "yamato.judgement_cut";
             case YamatoAnimationPayload.SHEATH -> "yamato.sheath";
             case YamatoAnimationPayload.UNLEASH -> "yamato.unleash";
             case YamatoAnimationPayload.DASH -> "yamato.dash";
+            case YamatoAnimationPayload.COUNTER -> "yamato.counter";
+            case YamatoAnimationPayload.WORLD_SPLIT -> "yamato.world_split";
             default -> null;
         };
     }

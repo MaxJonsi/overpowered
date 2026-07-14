@@ -31,6 +31,9 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.monster.WitherSkeleton;
+import net.minecraft.world.entity.monster.Skeleton;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
@@ -41,18 +44,21 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 public final class ShadowAbilityManager {
-    public static final int STEP_COST = 10;
-    public static final int EXCHANGE_COST = 15;
-    public static final int EXTRACTION_COST = 8;
+    public static final int STEP_COST = 8;
+    public static final int AUTHORITY_COST = 20;
+    public static final int EXCHANGE_COST = 12;
+    public static final int EXTRACTION_COST = 18;
     public static final int SUMMON_COST = 12;
-    public static final int MONARCH_FORM_COST = 35;
-    public static final int DOMAIN_COST = 90;
-    public static final int MONARCH_FORM_DURATION = 20 * 30;
+    public static final int KNIGHT_COST = 25;
+    public static final int MAGE_COST = 30;
+    public static final int MONARCH_FORM_COST = 45;
+    public static final int DOMAIN_COST = 100;
+    public static final int MONARCH_FORM_DURATION = -1;
     public static final int DOMAIN_PREPARE_TICKS = 40;
-    public static final int DOMAIN_DURATION = 20 * 25;
-    public static final int DOMAIN_RADIUS = 36;
+    public static final int DOMAIN_DURATION = 20 * 20;
+    public static final int DOMAIN_RADIUS = 60;
     public static final int MAX_SOULS = 50;
-    public static final int MAX_SOLDIERS = 12;
+    public static final int MAX_SOLDIERS = 8;
     private static final String SOLDIER_TAG = "overpowered.shadow_soldier";
 
     private static final List<SoulEcho> ECHOES = new ArrayList<>();
@@ -61,13 +67,37 @@ public final class ShadowAbilityManager {
     private static final Map<UUID, Long> MONARCH_FORMS = new HashMap<>();
     private static final Map<UUID, Long> PENDING_DOMAINS = new HashMap<>();
     private static final Map<UUID, DomainState> DOMAINS = new HashMap<>();
+    private static final Map<UUID, long[]> COMBOS = new HashMap<>();
 
     private ShadowAbilityManager() {
     }
 
+    public static boolean combo(ServerPlayer player, LivingEntity target) {
+        if (target == player || !target.isAlive()) return false;
+        long now = player.serverLevel().getGameTime();
+        long[] combo = COMBOS.computeIfAbsent(player.getUUID(), ignored ->
+                new long[]{-1, Long.MIN_VALUE / 2});
+        if (now - combo[1] < 4 || !LegendaryCombat.beginFree(player, 3)) return false;
+        int stage = now - combo[1] <= 18 ? (int) ((combo[0] + 1) % 6) : 0;
+        combo[0] = stage;
+        combo[1] = now;
+        Vec3 targetForward = target.getLookAngle().multiply(1, 0, 1);
+        Vec3 fromTarget = player.position().subtract(target.position()).multiply(1, 0, 1);
+        boolean behind = targetForward.lengthSqr() > 0.001 && fromTarget.lengthSqr() > 0.001
+                && targetForward.normalize().dot(fromTarget.normalize()) < -0.45;
+        float multiplier = behind ? 1.3f : 1f;
+        LegendaryCombat.damage(player, target, (stage == 5 ? 16f : 6f) * multiplier,
+                (stage == 5 ? 0.11f : 0.04f) * multiplier,
+                LegendaryCombat.AttackKind.PHYSICAL);
+        if (stage == 5) LegendaryCombat.stagger(target, 24, 1);
+        PowerEventDispatcher.broadcastDetailed(player, PowerEventPayload.POWER_SHADOW, 0,
+                PowerEventPayload.PHASE_RELEASE, 5, 5, stage);
+        return true;
+    }
+
     public static void shadowStep(ServerPlayer player) {
         Vec3 destination = targetedStepDestination(player);
-        if (destination == null || !PlayerEnergyManager.tryConsumeOrNotify(player, STEP_COST)) return;
+        if (destination == null || !LegendaryCombat.begin(player, STEP_COST, 5)) return;
 
         Vec3 origin = player.position();
         player.teleportTo(destination.x, destination.y, destination.z);
@@ -79,7 +109,18 @@ public final class ShadowAbilityManager {
                 new DustParticleOptions(new Vector3f(0.2f, 0.03f, 0.35f), 1.4f),
                 origin.x, origin.y + 1, origin.z, 24, 0.45, 0.8, 0.45, 0.03);
         PowerEventDispatcher.broadcast(player, PowerEventPayload.POWER_SHADOW, 1,
-                PowerEventPayload.PHASE_RELEASE, 8, 24);
+                PowerEventPayload.PHASE_RELEASE, 10, 30);
+    }
+
+    public static void rulersAuthority(ServerPlayer player) {
+        LivingEntity target = findTarget(player, 50);
+        if (target == null || !LegendaryCombat.begin(player, AUTHORITY_COST, 14)) return;
+        Vec3 motion = player.getLookAngle().normalize().scale(3.0).add(0, 0.75, 0);
+        target.setDeltaMovement(motion);
+        target.hurtMarked = true;
+        LegendaryCombat.damage(player, target, 35f, 0.20f, LegendaryCombat.AttackKind.ENERGY);
+        PowerEventDispatcher.broadcastAt(player, target.position(), PowerEventPayload.POWER_SHADOW, 2,
+                PowerEventPayload.PHASE_RELEASE, 16, 50);
     }
 
     public static void shadowExchange(ServerPlayer player) {
@@ -88,7 +129,7 @@ public final class ShadowAbilityManager {
             player.displayClientMessage(Component.translatable("message.overpowered.shadow.no_soldier"), true);
             return;
         }
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, EXCHANGE_COST)) return;
+        if (!LegendaryCombat.begin(player, EXCHANGE_COST, 6)) return;
 
         Vec3 playerPosition = player.position();
         Vec3 soldierPosition = soldier.position();
@@ -114,7 +155,7 @@ public final class ShadowAbilityManager {
             player.displayClientMessage(Component.translatable("message.overpowered.shadow.no_soul"), true);
             return;
         }
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, EXTRACTION_COST)) return;
+        if (!LegendaryCombat.begin(player, EXTRACTION_COST, 16)) return;
 
         ECHOES.remove(echo);
         int souls = Math.min(MAX_SOULS, SOULS.getOrDefault(player.getUUID(), 0) + 1);
@@ -134,10 +175,19 @@ public final class ShadowAbilityManager {
             return;
         }
         if (activeSoldierCount(player.getUUID()) >= MAX_SOLDIERS) return;
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, SUMMON_COST)) return;
+        SummonType type = player.isSprinting() && player.isShiftKeyDown()
+                ? SummonType.MAGE : player.isShiftKeyDown() ? SummonType.KNIGHT : SummonType.SOLDIER;
+        int typeLimit = type == SummonType.SOLDIER ? 5 : type == SummonType.KNIGHT ? 2 : 1;
+        if (activeSoldierCount(player, type) >= typeLimit) return;
+        int cost = switch (type) {
+            case SOLDIER -> SUMMON_COST;
+            case KNIGHT -> KNIGHT_COST;
+            case MAGE -> MAGE_COST;
+        };
+        if (!LegendaryCombat.begin(player, cost, 18)) return;
 
         SOULS.put(player.getUUID(), souls - 1);
-        spawnSoldier(player, player.position().add(player.getLookAngle().scale(2)), false);
+        spawnSoldier(player, player.position().add(player.getLookAngle().scale(2)), type, false);
         player.serverLevel().playSound(null, player.getX(), player.getY(), player.getZ(),
                 ModSounds.SHADOW_ARISE, SoundSource.PLAYERS, 1.8f, 1f);
         PowerEventDispatcher.broadcastDetailed(player, PowerEventPayload.POWER_SHADOW, 4,
@@ -146,20 +196,27 @@ public final class ShadowAbilityManager {
 
     public static void toggleMonarchForm(ServerPlayer player) {
         if (MONARCH_FORMS.remove(player.getUUID()) != null) {
+            if (!player.isCreative() && !player.isSpectator()) {
+                player.getAbilities().mayfly = false;
+                player.getAbilities().flying = false;
+                player.onUpdateAbilities();
+            }
             PowerEventDispatcher.broadcast(player, PowerEventPayload.POWER_SHADOW, 5,
                     PowerEventPayload.PHASE_STATE_END, 0, 12);
             return;
         }
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, MONARCH_FORM_COST)) return;
+        if (!LegendaryCombat.begin(player, MONARCH_FORM_COST, 30)) return;
 
-        MONARCH_FORMS.put(player.getUUID(), player.serverLevel().getGameTime() + MONARCH_FORM_DURATION);
+        MONARCH_FORMS.put(player.getUUID(), Long.MAX_VALUE);
+        player.getAbilities().mayfly = true;
+        player.onUpdateAbilities();
         PowerEventDispatcher.broadcast(player, PowerEventPayload.POWER_SHADOW, 5,
                 PowerEventPayload.PHASE_STATE_START, MONARCH_FORM_DURATION, 12);
     }
 
     public static void shadowDomain(ServerPlayer player) {
         if (PENDING_DOMAINS.containsKey(player.getUUID()) || DOMAINS.containsKey(player.getUUID())) return;
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, DOMAIN_COST)) return;
+        if (!LegendaryCombat.begin(player, DOMAIN_COST, DOMAIN_PREPARE_TICKS)) return;
 
         PENDING_DOMAINS.put(player.getUUID(), player.serverLevel().getGameTime() + DOMAIN_PREPARE_TICKS);
         player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN,
@@ -183,7 +240,7 @@ public final class ShadowAbilityManager {
             if (owner == null || activeSoldierCount(owner.getUUID()) >= MAX_SOLDIERS) continue;
             ECHOES.remove(echo);
             spawnRemnant(level, dead.position(), dead.getBbWidth());
-            spawnSoldier(owner, dead.position(), true);
+            spawnSoldier(owner, dead.position(), SummonType.KNIGHT, true);
             break;
         }
     }
@@ -193,9 +250,29 @@ public final class ShadowAbilityManager {
             ServerLevel level = server.getLevel(echo.dimension);
             return level == null || level.getGameTime() >= echo.expiresAt;
         });
+        tickPassive(server);
         tickSoldiers(server);
         tickMonarchForms(server);
         tickDomains(server);
+    }
+
+    private static void tickPassive(MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (!(player.getMainHandItem().getItem() instanceof com.maxjonsi.overpowered.item.ShadowDaggerItem)
+                    && !(player.getOffhandItem().getItem() instanceof com.maxjonsi.overpowered.item.ShadowDaggerItem)) {
+                continue;
+            }
+            if (!player.serverLevel().isDay()) {
+                player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 25, 1, true, false));
+                player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_BOOST, 25, 0, true, false));
+                if (player.tickCount % 20 == 0) {
+                    PlayerEnergyManager.setEnergy(player,
+                            Math.min(PlayerEnergyManager.MAX_ENERGY,
+                                    PlayerEnergyManager.getEnergy(player) + 1));
+                }
+            }
+            if (player.tickCount % 100 == 0) recoverPersistentSoldiers(player);
+        }
     }
 
     private static void tickSoldiers(MinecraftServer server) {
@@ -207,7 +284,7 @@ public final class ShadowAbilityManager {
 
             entry.getValue().removeIf(soldierId -> {
                 Entity entity = findEntity(server, soldierId);
-                if (!(entity instanceof WitherSkeleton soldier) || !soldier.isAlive()) return true;
+                if (!(entity instanceof Mob soldier) || !soldier.isAlive()) return true;
                 if (!soldier.level().dimension().equals(owner.level().dimension())) return false;
 
                 if (soldier.distanceToSqr(owner) > 40 * 40) {
@@ -238,8 +315,15 @@ public final class ShadowAbilityManager {
         while (iterator.hasNext()) {
             Map.Entry<UUID, Long> entry = iterator.next();
             ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey());
-            if (player == null || player.serverLevel().getGameTime() >= entry.getValue()) {
+            boolean exhausted = player != null && player.tickCount % 10 == 0
+                    && !PlayerEnergyManager.tryConsume(player, 1);
+            if (player == null || exhausted) {
                 if (player != null) {
+                    if (!player.isCreative() && !player.isSpectator()) {
+                        player.getAbilities().mayfly = false;
+                        player.getAbilities().flying = false;
+                        player.onUpdateAbilities();
+                    }
                     PowerEventDispatcher.broadcast(player, PowerEventPayload.POWER_SHADOW, 5,
                             PowerEventPayload.PHASE_STATE_END, 0, 12);
                 }
@@ -251,6 +335,7 @@ public final class ShadowAbilityManager {
             player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 25, 2, true, false));
             player.addEffect(new MobEffectInstance(MobEffects.DAMAGE_RESISTANCE, 25, 1, true, false));
             player.addEffect(new MobEffectInstance(MobEffects.NIGHT_VISION, 240, 0, true, false));
+            player.getAbilities().mayfly = true;
             if (player.tickCount % 4 == 0) {
                 player.serverLevel().sendParticles(
                         new DustParticleOptions(new Vector3f(0.25f, 0.04f, 0.45f), 1.4f),
@@ -273,9 +358,12 @@ public final class ShadowAbilityManager {
 
             DOMAINS.put(player.getUUID(), new DomainState(
                     player.serverLevel().dimension(), player.position(), now + DOMAIN_DURATION));
+            player.serverLevel().playSound(null, player.getX(), player.getY(), player.getZ(),
+                    ModSounds.SHADOW_PORTAL, SoundSource.MASTER, 4f, 0.7f);
             for (int i = 0; i < 3 && activeSoldierCount(player.getUUID()) < MAX_SOLDIERS; i++) {
                 double angle = i * Math.PI * 2 / 3;
-                spawnSoldier(player, player.position().add(Math.cos(angle) * 4, 0, Math.sin(angle) * 4), true);
+                spawnSoldier(player, player.position().add(Math.cos(angle) * 4, 0, Math.sin(angle) * 4),
+                        SummonType.KNIGHT, true);
             }
             PowerEventDispatcher.broadcastAt(player, player.position(), PowerEventPayload.POWER_SHADOW, 6,
                     PowerEventPayload.PHASE_RELEASE, DOMAIN_DURATION, DOMAIN_RADIUS);
@@ -292,6 +380,7 @@ public final class ShadowAbilityManager {
                 if (owner != null) {
                     PowerEventDispatcher.broadcastAt(owner, state.center, PowerEventPayload.POWER_SHADOW, 6,
                             PowerEventPayload.PHASE_AFTERMATH, 80, DOMAIN_RADIUS);
+                    removeTemporarySoldiers(server, owner.getUUID());
                 }
                 active.remove();
                 continue;
@@ -309,23 +398,32 @@ public final class ShadowAbilityManager {
         }
     }
 
-    private static void spawnSoldier(ServerPlayer owner, Vec3 position, boolean elite) {
+    private static void spawnSoldier(ServerPlayer owner, Vec3 position, SummonType type, boolean temporary) {
         ServerLevel level = owner.serverLevel();
-        WitherSkeleton soldier = new WitherSkeleton(EntityType.WITHER_SKELETON, level);
+        Mob soldier = type == SummonType.MAGE
+                ? new Skeleton(EntityType.SKELETON, level)
+                : new WitherSkeleton(EntityType.WITHER_SKELETON, level);
         soldier.setPos(position.x, position.y, position.z);
         soldier.addTag(SOLDIER_TAG);
         soldier.addTag("overpowered.shadow_owner." + owner.getUUID());
+        soldier.addTag("overpowered.shadow_type." + type.name().toLowerCase(java.util.Locale.ROOT));
+        if (temporary) soldier.addTag("overpowered.shadow_temporary");
         soldier.setPersistenceRequired();
         soldier.setCanPickUpLoot(false);
-        soldier.setCustomName(Component.translatable(elite
-                ? "entity.overpowered.elite_shadow_soldier"
-                : "entity.overpowered.shadow_soldier"));
+        soldier.setCustomName(Component.literal("Shadow " + switch (type) {
+            case SOLDIER -> "Soldier";
+            case KNIGHT -> "Knight";
+            case MAGE -> "Mage";
+        }));
+        if (type == SummonType.MAGE) soldier.setItemSlot(EquipmentSlot.MAINHAND, Items.BOW.getDefaultInstance());
         if (soldier.getAttribute(Attributes.MAX_HEALTH) != null) {
-            soldier.getAttribute(Attributes.MAX_HEALTH).setBaseValue(elite ? 80 : 45);
-            soldier.setHealth(elite ? 80 : 45);
+            double health = type == SummonType.KNIGHT ? 90 : type == SummonType.MAGE ? 50 : 45;
+            soldier.getAttribute(Attributes.MAX_HEALTH).setBaseValue(health);
+            soldier.setHealth((float) health);
         }
         if (soldier.getAttribute(Attributes.ATTACK_DAMAGE) != null) {
-            soldier.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(elite ? 14 : 9);
+            soldier.getAttribute(Attributes.ATTACK_DAMAGE).setBaseValue(
+                    type == SummonType.KNIGHT ? 14 : type == SummonType.MAGE ? 7 : 9);
         }
         soldier.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, -1, 0, true, false));
         if (level.addFreshEntity(soldier)) {
@@ -343,7 +441,7 @@ public final class ShadowAbilityManager {
     private static Vec3 targetedStepDestination(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
         Vec3 eye = player.getEyePosition();
-        Vec3 end = eye.add(player.getLookAngle().scale(24));
+        Vec3 end = eye.add(player.getLookAngle().scale(30));
         HitResult blockHit = level.clip(new ClipContext(
                 eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
         Vec3 clippedEnd = blockHit.getType() == HitResult.Type.MISS ? end : blockHit.getLocation();
@@ -358,13 +456,49 @@ public final class ShadowAbilityManager {
             }
         }
 
-        for (int distance = 20; distance >= 2; distance--) {
+        for (int distance = 30; distance >= 2; distance--) {
             Vec3 candidate = player.position().add(player.getLookAngle().scale(distance));
             if (level.noCollision(player, player.getBoundingBox().move(candidate.subtract(player.position())))) {
                 return candidate;
             }
         }
         return null;
+    }
+
+    private static LivingEntity findTarget(ServerPlayer player, double range) {
+        Vec3 eye = player.getEyePosition();
+        Vec3 end = eye.add(player.getLookAngle().scale(range));
+        HitResult blockHit = player.serverLevel().clip(new ClipContext(
+                eye, end, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
+        if (blockHit.getType() != HitResult.Type.MISS) end = blockHit.getLocation();
+        EntityHitResult hit = ProjectileUtil.getEntityHitResult(player.serverLevel(), player, eye, end,
+                new AABB(eye, end).inflate(1),
+                entity -> entity instanceof LivingEntity && entity != player && entity.isAlive());
+        return hit != null && hit.getEntity() instanceof LivingEntity living ? living : null;
+    }
+
+    private static void recoverPersistentSoldiers(ServerPlayer owner) {
+        String ownerTag = "overpowered.shadow_owner." + owner.getUUID();
+        List<UUID> tracked = SOLDIERS.computeIfAbsent(owner.getUUID(), ignored -> new ArrayList<>());
+        for (Entity entity : owner.serverLevel().getAllEntities()) {
+            if (entity.getTags().contains(SOLDIER_TAG) && entity.getTags().contains(ownerTag)
+                    && entity.isAlive() && !tracked.contains(entity.getUUID())) {
+                tracked.add(entity.getUUID());
+            }
+        }
+    }
+
+    private static void removeTemporarySoldiers(MinecraftServer server, UUID ownerId) {
+        List<UUID> tracked = SOLDIERS.get(ownerId);
+        if (tracked == null) return;
+        tracked.removeIf(id -> {
+            Entity entity = findEntity(server, id);
+            if (entity != null && entity.getTags().contains("overpowered.shadow_temporary")) {
+                entity.discard();
+                return true;
+            }
+            return false;
+        });
     }
 
     private static Entity nearestSoldier(ServerPlayer owner) {
@@ -379,6 +513,16 @@ public final class ShadowAbilityManager {
         return SOLDIERS.getOrDefault(ownerId, List.of()).size();
     }
 
+    private static int activeSoldierCount(ServerPlayer owner, SummonType type) {
+        String typeTag = "overpowered.shadow_type." + type.name().toLowerCase(java.util.Locale.ROOT);
+        int count = 0;
+        for (UUID id : SOLDIERS.getOrDefault(owner.getUUID(), List.of())) {
+            Entity entity = owner.serverLevel().getEntity(id);
+            if (entity != null && entity.isAlive() && entity.getTags().contains(typeTag)) count++;
+        }
+        return count;
+    }
+
     private static Entity findEntity(MinecraftServer server, UUID entityId) {
         for (ServerLevel level : server.getAllLevels()) {
             Entity entity = level.getEntity(entityId);
@@ -391,13 +535,8 @@ public final class ShadowAbilityManager {
         MONARCH_FORMS.remove(playerId);
         PENDING_DOMAINS.remove(playerId);
         DOMAINS.remove(playerId);
-        List<UUID> soldiers = SOLDIERS.remove(playerId);
-        if (soldiers != null) {
-            for (UUID soldierId : soldiers) {
-                Entity soldier = findEntity(server, soldierId);
-                if (soldier != null) soldier.discard();
-            }
-        }
+        SOLDIERS.remove(playerId);
+        COMBOS.remove(playerId);
     }
 
     public static void clear() {
@@ -407,11 +546,18 @@ public final class ShadowAbilityManager {
         MONARCH_FORMS.clear();
         PENDING_DOMAINS.clear();
         DOMAINS.clear();
+        COMBOS.clear();
     }
 
     private record SoulEcho(ResourceKey<Level> dimension, Vec3 position, float width, long expiresAt) {
     }
 
     private record DomainState(ResourceKey<Level> dimension, Vec3 center, long endTick) {
+    }
+
+    private enum SummonType {
+        SOLDIER,
+        KNIGHT,
+        MAGE
     }
 }

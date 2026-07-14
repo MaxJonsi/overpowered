@@ -8,6 +8,8 @@ import com.maxjonsi.overpowered.registry.ModEntities;
 import com.maxjonsi.overpowered.registry.ModSounds;
 import com.maxjonsi.overpowered.server.PlayerEnergyManager;
 import com.maxjonsi.overpowered.server.GojoAbilityManager;
+import com.maxjonsi.overpowered.server.LegendaryCombat;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -36,11 +38,13 @@ public class SixEyesItem extends Item {
     public static final int TECH_DOMAIN = 3;
     public static final int TECH_INFINITY = 4;
     public static final int TECH_TELEPORT = 5;
+    public static final int TECH_MAXIMUM_BLUE = 6;
+    public static final int TECH_FOCUS = 7;
 
     public static final int BLUE_COST = 15;
-    public static final int RED_COST = 18;
-    public static final int PURPLE_COST = 45;
-    public static final int DOMAIN_COST = 75;
+    public static final int RED_COST = 22;
+    public static final int PURPLE_COST = 65;
+    public static final int DOMAIN_COST = 100;
 
     private static final String[] TECH_KEYS = {
             "message.overpowered.technique.blue",
@@ -48,7 +52,9 @@ public class SixEyesItem extends Item {
             "message.overpowered.technique.purple",
             "message.overpowered.technique.domain",
             "message.overpowered.technique.infinity",
-            "message.overpowered.technique.teleport"};
+            "message.overpowered.technique.teleport",
+            "message.overpowered.technique.maximum_blue",
+            "message.overpowered.technique.infinity_focus"};
 
     public SixEyesItem(Properties properties) {
         super(properties);
@@ -81,8 +87,17 @@ public class SixEyesItem extends Item {
             GojoAbilityManager.teleport(player);
             return true;
         }
+        if (technique == TECH_MAXIMUM_BLUE) {
+            GojoAbilityManager.maximumBlue(player);
+            return true;
+        }
+        if (technique == TECH_FOCUS) {
+            GojoAbilityManager.infinityFocus(player);
+            return true;
+        }
         if (technique == TECH_DOMAIN && DomainEntity.getActive(player.getUUID()) != null) return false;
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, energyCostFor(technique))) return false;
+        int commitment = technique == TECH_PURPLE ? 40 : technique == TECH_DOMAIN ? 35 : 12;
+        if (!LegendaryCombat.begin(player, energyCostFor(technique), commitment)) return false;
 
         ServerLevel level = player.serverLevel();
         switch (technique) {
@@ -108,19 +123,37 @@ public class SixEyesItem extends Item {
         vortex.setPos(center);
         level.addFreshEntity(vortex);
 
-        player.getCooldowns().addCooldown(this, 80);
     }
 
     private void castRed(ServerLevel level, ServerPlayer player) {
-        Vec3 center = player.position().add(0, 1, 0);
-        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(center, center).inflate(12),
-                e -> e != player && e.isAlive())) {
+        Vec3 center = player.getEyePosition().add(player.getLookAngle().scale(2));
+        Vec3 forward = player.getLookAngle().normalize();
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(center, center).inflate(16),
+                e -> e != player && e.isAlive()
+                        && e.position().subtract(center).normalize().dot(forward) > 0.25)) {
             Vec3 away = target.position().subtract(center);
             double dist = Math.max(1, away.length());
-            Vec3 push = away.normalize().scale(3.2 * (1 - dist / 16)).add(0, 0.6, 0);
+            Vec3 push = away.normalize().scale(4.2 * (1 - Math.min(16, dist) / 20)).add(0, 0.7, 0);
             target.setDeltaMovement(target.getDeltaMovement().add(push));
             target.hurtMarked = true;
-            target.hurt(player.damageSources().indirectMagic(player, player), 10f);
+            LegendaryCombat.damage(player, target, 40f, 0.22f, LegendaryCombat.AttackKind.ENERGY);
+        }
+
+        BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
+        BlockPos base = BlockPos.containing(center);
+        for (int x = -12; x <= 12; x++) {
+            for (int y = -6; y <= 6; y++) {
+                for (int z = -12; z <= 12; z++) {
+                    cursor.set(base.getX() + x, base.getY() + y, base.getZ() + z);
+                    Vec3 offset = Vec3.atCenterOf(cursor).subtract(center);
+                    if (offset.lengthSqr() > 12 * 12 || offset.normalize().dot(forward) < 0.45) continue;
+                    var state = level.getBlockState(cursor);
+                    float hardness = state.getDestroySpeed(level, cursor);
+                    if (!state.isAir() && level.getBlockEntity(cursor) == null && hardness >= 0 && hardness <= 3.0f) {
+                        level.destroyBlock(cursor, false, player);
+                    }
+                }
+            }
         }
 
         for (int ring = 2; ring <= 10; ring += 2) {
@@ -132,7 +165,6 @@ public class SixEyesItem extends Item {
         }
         level.sendParticles(ParticleTypes.EXPLOSION, center.x, center.y, center.z, 3, 1, 1, 1, 0);
         level.playSound(null, center.x, center.y, center.z, ModSounds.GOJO_RED, SoundSource.PLAYERS, 2.5f, 1f);
-        player.getCooldowns().addCooldown(this, 80);
     }
 
     private void castPurple(ServerLevel level, ServerPlayer player) {
@@ -147,7 +179,6 @@ public class SixEyesItem extends Item {
         level.addFreshEntity(purple);
 
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.GOJO_PURPLE, SoundSource.PLAYERS, 3f, 1f);
-        player.getCooldowns().addCooldown(this, 400);
     }
 
     private void castDomain(ServerLevel level, ServerPlayer player) {
@@ -160,7 +191,6 @@ public class SixEyesItem extends Item {
 
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.GOJO_DOMAIN, SoundSource.MASTER, 8f, 1f);
         player.displayClientMessage(Component.translatable(TECH_KEYS[TECH_DOMAIN]), true);
-        player.getCooldowns().addCooldown(this, 1800);
     }
 
     public void cycleTechnique(ServerPlayer player, ItemStack stack) {

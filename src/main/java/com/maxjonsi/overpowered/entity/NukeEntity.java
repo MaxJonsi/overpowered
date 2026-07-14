@@ -2,6 +2,7 @@ package com.maxjonsi.overpowered.entity;
 
 import com.maxjonsi.overpowered.registry.ModSounds;
 import com.maxjonsi.overpowered.server.NuclearAbilityManager;
+import com.maxjonsi.overpowered.server.LegendaryCombat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
@@ -54,6 +55,8 @@ public class NukeEntity extends Entity implements GeoEntity {
     private int cloudTicks;
     private ChunkPos anchorTicketChunk;
     private int blastRadius = DEFAULT_RADIUS;
+    private float legendaryPercent = 0.45f;
+    private final Set<UUID> damagedEntities = new HashSet<>();
 
     public NukeEntity(EntityType<?> type, Level level) {
         super(type, level);
@@ -92,7 +95,7 @@ public class NukeEntity extends Entity implements GeoEntity {
 
         if (destructionComplete) {
             lingerTicks++;
-            if (lingerTicks > 60) discard();
+            if (cloudTicks > 20 * 60) discard();
         }
     }
 
@@ -110,7 +113,7 @@ public class NukeEntity extends Entity implements GeoEntity {
         level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY(), getZ(), 20, 8, 4, 8, 0);
         level.sendParticles(ParticleTypes.FLASH, getX(), getY() + 2, getZ(), 3, 0, 0, 0, 0);
         NuclearAbilityManager.addRadiationZone(level, Vec3.atCenterOf(center),
-                Math.max(18, (int) (blastRadius * 0.75)), 20 * 30);
+                Math.max(18, (int) (blastRadius * 0.75)), NuclearAbilityManager.RADIATION_DURATION);
     }
 
     public void prepareForLaunch(ServerLevel level) {
@@ -124,6 +127,11 @@ public class NukeEntity extends Entity implements GeoEntity {
 
     public int getBlastRadius() {
         return blastRadius;
+    }
+
+    public void setLegendaryPercent(float legendaryPercent) {
+        if (detonated) return;
+        this.legendaryPercent = Mth.clamp(legendaryPercent, 0.05f, 1f);
     }
 
     private void destroyBlocks(ServerLevel level) {
@@ -282,11 +290,13 @@ public class NukeEntity extends Entity implements GeoEntity {
         Vec3 c = Vec3.atCenterOf(center);
         double damageRadius = Math.max(14, blastRadius * 0.7);
         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(c, c).inflate(damageRadius),
-                e -> e.isAlive() && !e.isSpectator())) {
+                e -> e.isAlive() && !e.isSpectator() && damagedEntities.add(e.getUUID()))) {
             double dist = target.position().distanceTo(c);
             if (dist > damageRadius) continue;
             float damage = (float) (Math.max(35, blastRadius * 1.2) * (1 - dist / damageRadius));
-            target.hurt(level.damageSources().explosion(this, null), damage);
+            float distanceScale = (float) Math.max(0.15, 1 - dist / damageRadius);
+            LegendaryCombat.damage(target, level.damageSources().explosion(this, null),
+                    damage, legendaryPercent * distanceScale, LegendaryCombat.AttackKind.WORLD_LEVEL);
             target.igniteForSeconds(5);
         }
     }
@@ -312,6 +322,7 @@ public class NukeEntity extends Entity implements GeoEntity {
         lingerTicks = tag.getInt("LingerTicks");
         cloudTicks = tag.getInt("CloudTicks");
         blastRadius = tag.contains("BlastRadius") ? tag.getInt("BlastRadius") : DEFAULT_RADIUS;
+        legendaryPercent = tag.contains("LegendaryPercent") ? tag.getFloat("LegendaryPercent") : 0.45f;
     }
 
     @Override
@@ -327,6 +338,7 @@ public class NukeEntity extends Entity implements GeoEntity {
         tag.putInt("LingerTicks", lingerTicks);
         tag.putInt("CloudTicks", cloudTicks);
         tag.putInt("BlastRadius", blastRadius);
+        tag.putFloat("LegendaryPercent", legendaryPercent);
     }
 
     @Override

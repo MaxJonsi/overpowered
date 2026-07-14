@@ -9,6 +9,7 @@ import com.maxjonsi.overpowered.registry.ModEntities;
 import com.maxjonsi.overpowered.registry.ModSounds;
 import com.maxjonsi.overpowered.server.PlayerEnergyManager;
 import com.maxjonsi.overpowered.server.PowerEventDispatcher;
+import com.maxjonsi.overpowered.server.LegendaryCombat;
 import com.maxjonsi.overpowered.server.YamatoAbilityManager;
 import java.util.HashMap;
 import java.util.Map;
@@ -52,10 +53,10 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class YamatoItem extends Item implements GeoItem {
-    public static final int COMBO_COST = 2;
-    public static final int JUDGEMENT_CUT_COST = 8;
-    public static final int JUDGEMENT_CUT_END_COST = 45;
-    public static final int DASH_COST = 12;
+    public static final int COMBO_COST = 0;
+    public static final int JUDGEMENT_CUT_COST = 12;
+    public static final int JUDGEMENT_CUT_END_COST = 100;
+    public static final int DASH_COST = 8;
 
     private static final RawAnimation IDLE = RawAnimation.begin().thenLoop("animation.overpowered.yamato.idle");
     private static final Map<UUID, long[]> COMBO = new HashMap<>();
@@ -81,6 +82,8 @@ public class YamatoItem extends Item implements GeoItem {
                 .triggerableAnim("slash_1", RawAnimation.begin().thenPlay("animation.overpowered.yamato.slash_1"))
                 .triggerableAnim("slash_2", RawAnimation.begin().thenPlay("animation.overpowered.yamato.slash_2"))
                 .triggerableAnim("slash_3", RawAnimation.begin().thenPlay("animation.overpowered.yamato.slash_3"))
+                .triggerableAnim("slash_4", RawAnimation.begin().thenPlay("animation.overpowered.yamato.slash_4"))
+                .triggerableAnim("slash_5", RawAnimation.begin().thenPlay("animation.overpowered.yamato.slash_5"))
                 .triggerableAnim("judgement_cut", RawAnimation.begin().thenPlay("animation.overpowered.yamato.judgement_cut"))
                 .triggerableAnim("sheath", RawAnimation.begin().thenPlayAndHold("animation.overpowered.yamato.sheath"))
                 .triggerableAnim("unleash", RawAnimation.begin().thenPlay("animation.overpowered.yamato.unleash"))
@@ -165,19 +168,16 @@ public class YamatoItem extends Item implements GeoItem {
     }
 
     public boolean performJudgementCut(ServerPlayer player, ItemStack stack) {
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, JUDGEMENT_CUT_COST)) return false;
+        if (!LegendaryCombat.begin(player, JUDGEMENT_CUT_COST, 8)) return false;
+        boolean perfect = YamatoAbilityManager.consumePrecisionWindow(player);
 
         ServerLevel level = player.serverLevel();
         Vec3 eye = player.getEyePosition();
         Vec3 look = player.getLookAngle();
-        Vec3 end = eye.add(look.scale(24));
-        BlockHitResult blockHit = level.clip(new ClipContext(eye, end,
-                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
-        Vec3 target = blockHit.getType() == HitResult.Type.MISS
-                ? end
-                : blockHit.getLocation().subtract(look.scale(1.5));
-        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(level, player, eye, target,
-                new AABB(eye, target).inflate(1),
+        Vec3 end = eye.add(look.scale(60));
+        Vec3 target = end;
+        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(level, player, eye, end,
+                new AABB(eye, end).inflate(1.25),
                 entity -> entity instanceof LivingEntity && entity != player && entity.isAlive());
         if (entityHit != null) {
             Entity hit = entityHit.getEntity();
@@ -186,11 +186,18 @@ public class YamatoItem extends Item implements GeoItem {
 
         JudgementCutEntity cut = new JudgementCutEntity(ModEntities.JUDGEMENT_CUT, level);
         cut.setOwnerId(player.getUUID());
+        cut.setPerfect(perfect);
         cut.setPos(target);
         level.addFreshEntity(cut);
         triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "judgement_cut");
         broadcastPlayerAnimation(player, YamatoAnimationPayload.JUDGEMENT_CUT);
-        player.getCooldowns().addCooldown(this, 15);
+        player.getCooldowns().addCooldown(this, 8);
+        if (perfect && !PlayerEnergyManager.isInfinite(player)) {
+            PlayerEnergyManager.setEnergy(player,
+                    Math.min(PlayerEnergyManager.MAX_ENERGY, PlayerEnergyManager.getEnergy(player) + 5));
+        }
+        PowerEventDispatcher.broadcastDetailed(player, PowerEventPayload.POWER_YAMATO, 1,
+                PowerEventPayload.PHASE_RELEASE, 24, perfect ? 5 : 4, perfect ? 1 : 0);
         return true;
     }
 
@@ -210,7 +217,7 @@ public class YamatoItem extends Item implements GeoItem {
         long now = level.getGameTime();
         long[] combo = COMBO.computeIfAbsent(player.getUUID(), k -> new long[]{-1, 0});
         if (now - combo[1] < 5 && combo[0] >= 0) return;
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, COMBO_COST)) return;
+        if (!LegendaryCombat.beginFree(player, 4)) return;
 
         Vec3 pickEye = player.getEyePosition();
         Vec3 pickEnd = pickEye.add(player.getLookAngle().scale(4.5));
@@ -218,7 +225,7 @@ public class YamatoItem extends Item implements GeoItem {
                 new AABB(pickEye, pickEnd).inflate(0.5), e -> e instanceof LivingEntity && e != player && e.isAlive());
         Entity primaryTarget = picked != null ? picked.getEntity() : null;
 
-        int stage = (now - combo[1] < 14) ? (int) ((combo[0] + 1) % 3) : 0;
+        int stage = (now - combo[1] < 18) ? (int) ((combo[0] + 1) % 5) : 0;
         combo[0] = stage;
         combo[1] = now;
 
@@ -230,12 +237,37 @@ public class YamatoItem extends Item implements GeoItem {
         Vec3 center = player.position().add(look.scale(2.5)).add(0, 1, 0);
         level.sendParticles(ParticleTypes.SWEEP_ATTACK, center.x, center.y, center.z, 2, 0.6, 0.4, 0.6, 0);
 
-        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(center, center).inflate(2.8),
-                e -> e != player && e.isAlive() && e != primaryTarget)) {
+        boolean devilTrigger = YamatoAbilityManager.isDevilTrigger(player.getUUID());
+        boolean empowered = YamatoAbilityManager.consumeEmpoweredStrike(player);
+        float multiplier = (devilTrigger ? 1.4f : 1f) * (empowered ? 1.25f : 1f);
+        float ordinaryDamage = (stage == 4 ? 14f : 8f) * multiplier;
+        float legendaryFraction = (stage == 4 ? 0.10f : 0.06f) * multiplier;
+        for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
+                new AABB(center, center).inflate(2.8),
+                e -> e != player && e != primaryTarget && e.isAlive())) {
             Vec3 toTarget = target.position().subtract(player.position()).normalize();
             if (toTarget.dot(look) > 0.35) {
-                target.hurt(player.damageSources().playerAttack(player), 12f);
+                LegendaryCombat.damage(player, target, ordinaryDamage, legendaryFraction,
+                        LegendaryCombat.AttackKind.SPATIAL);
+                if (stage == 4) {
+                    LegendaryCombat.stagger(target, 30, 2);
+                    if (devilTrigger) {
+                        LegendaryCombat.damage(player, target, 10f, 0.06f,
+                                LegendaryCombat.AttackKind.SPATIAL);
+                    }
+                }
             }
+        }
+        if (primaryTarget instanceof LivingEntity primary
+                && primary.position().distanceToSqr(player.position()) <= 5.5 * 5.5) {
+            LegendaryCombat.damage(player, primary, ordinaryDamage, legendaryFraction,
+                    LegendaryCombat.AttackKind.SPATIAL);
+            if (stage == 4) LegendaryCombat.stagger(primary, 30, 2);
+        }
+        YamatoAbilityManager.markPrecisionWindow(player);
+        if (stage == 4) {
+            PowerEventDispatcher.broadcastDetailed(player, PowerEventPayload.POWER_YAMATO, 0,
+                    PowerEventPayload.PHASE_RELEASE, 8, 5, 4);
         }
     }
 
@@ -243,8 +275,8 @@ public class YamatoItem extends Item implements GeoItem {
         ServerLevel level = player.serverLevel();
         long now = level.getGameTime();
         Long last = DASH_COOLDOWN.get(player.getUUID());
-        if (last != null && now - last < 50) return;
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, DASH_COST)) return;
+        if (last != null && now - last < 8) return;
+        if (!LegendaryCombat.begin(player, DASH_COST, 7)) return;
         DASH_COOLDOWN.put(player.getUUID(), now);
 
         Vec3 look = player.getLookAngle();
@@ -253,13 +285,15 @@ public class YamatoItem extends Item implements GeoItem {
         player.hurtMarked = true;
 
         Vec3 start = player.position().add(0, 1, 0);
-        Vec3 end = start.add(dir.scale(9));
+        Vec3 end = start.add(dir.scale(12));
         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class, new AABB(start, end).inflate(1.5),
                 e -> e != player && e.isAlive())) {
-            target.hurt(player.damageSources().playerAttack(player), 16f);
+            LegendaryCombat.damage(player, target, 18f, 0.13f,
+                    LegendaryCombat.AttackKind.SPATIAL);
+            LegendaryCombat.stagger(target, 16, 1);
         }
 
-        for (int i = 0; i < 9; i++) {
+        for (int i = 0; i < 12; i++) {
             Vec3 p = start.add(dir.scale(i));
             level.sendParticles(ParticleTypes.SWEEP_ATTACK, p.x, p.y, p.z, 1, 0.3, 0.3, 0.3, 0);
             level.sendParticles(ParticleTypes.CLOUD, p.x, p.y, p.z, 2, 0.2, 0.2, 0.2, 0.01);
@@ -283,7 +317,7 @@ public class YamatoItem extends Item implements GeoItem {
         YamatoAbilityManager.clear();
     }
 
-    private static void broadcastPlayerAnimation(ServerPlayer player, int animation) {
+    public static void broadcastPlayerAnimation(ServerPlayer player, int animation) {
         YamatoAnimationPayload payload = new YamatoAnimationPayload(player.getId(), animation);
         ServerPlayNetworking.send(player, payload);
         for (ServerPlayer observer : PlayerLookup.tracking(player)) {

@@ -15,6 +15,8 @@ public interface PowerHudData {
 
     List<AbilityEntry> abilities();
 
+    String selectedAbility();
+
     List<String> activeBuffs();
 
     boolean isInfinityCore();

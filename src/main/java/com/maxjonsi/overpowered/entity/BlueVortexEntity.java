@@ -1,6 +1,7 @@
 package com.maxjonsi.overpowered.entity;
 
 import com.maxjonsi.overpowered.registry.ModSounds;
+import com.maxjonsi.overpowered.server.LegendaryCombat;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -15,9 +16,9 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 public class BlueVortexEntity extends EffectEntity {
-    private static final double PULL_RADIUS = 9;
+    private static final double PULL_RADIUS = 12;
     private static final int WARMUP_TICKS = 10;
-    private static final int ACTIVE_TICKS = 50;
+    private static final int ACTIVE_TICKS = 60;
     private static final DustParticleOptions BLUE_DUST =
             new DustParticleOptions(new Vector3f(0.15f, 0.55f, 1f), 1.8f);
 
@@ -50,14 +51,15 @@ public class BlueVortexEntity extends EffectEntity {
         }
 
         int activeTick = tickCount - WARMUP_TICKS;
-        if (activeTick % 10 == 0) {
+        if (activeTick % 20 == 0) {
             Player owner = getOwnerPlayer();
             DamageSource source = owner != null
                     ? level.damageSources().indirectMagic(owner, owner)
                     : level.damageSources().magic();
             for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
-                    new AABB(center, center).inflate(1.8), this::isVictim)) {
-                target.hurt(source, 7f);
+                    new AABB(center, center).inflate(PULL_RADIUS), this::isVictim)) {
+                LegendaryCombat.damage(target, source, 8f, 0.05f,
+                        LegendaryCombat.AttackKind.ENERGY);
             }
         }
 
@@ -71,7 +73,19 @@ public class BlueVortexEntity extends EffectEntity {
         }
         level.sendParticles(BLUE_DUST, getX(), getY(), getZ(), 4, 0.4, 0.4, 0.4, 0);
 
-        if (activeTick >= ACTIVE_TICKS) discard();
+        if (activeTick >= ACTIVE_TICKS) {
+            Player owner = getOwnerPlayer();
+            DamageSource source = owner != null
+                    ? level.damageSources().indirectMagic(owner, owner)
+                    : level.damageSources().magic();
+            for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
+                    new AABB(center, center).inflate(2.4), this::isVictim)) {
+                LegendaryCombat.damage(target, source, 28f, 0.16f,
+                        LegendaryCombat.AttackKind.ENERGY);
+                LegendaryCombat.stagger(target, 20, 1);
+            }
+            discard();
+        }
     }
 
     private void chargeAtOwner(ServerLevel level) {

@@ -106,4 +106,12 @@
   "key.overpowered.hud_toggle": "Переключить HUD силы",
   "message.overpowered.yamato.no_target": "Air Trick: нужна живая цель у перекрестья",
   "message.overpowered.yamato.no_space": "За целью нет безопасного места"
+, "message.overpowered.technique.maximum_blue": "Техника: Максимальный Синий",
+  "message.overpowered.technique.infinity_focus": "Техника: Фокус Бесконечности",
+  "message.overpowered.dio.vampire_strike": "Способность: Вампирский удар",
+  "message.overpowered.dio.temporal_lock": "Способность: Временной захват",
+  "message.overpowered.aizen.kurohitsugi": "Способность: Курохицуги",
+  "message.overpowered.shadow.authority": "Способность: Власть правителя",
+  "message.overpowered.void.step": "Способность: Шаг Пустоты",
+  "message.overpowered.void.grasp": "Способность: Хватка Пустоты"
 }

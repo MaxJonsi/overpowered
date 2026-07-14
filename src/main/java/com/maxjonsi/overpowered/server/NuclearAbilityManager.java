@@ -36,55 +36,78 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Vector3f;
 
 public final class NuclearAbilityManager {
-    public static final int MINI_NUKE_COST = 18;
-    public static final int MIRV_COST = 35;
-    public static final int ORBITAL_COST = 60;
+    public static final int MICRO_NUKE_COST = 15;
+    public static final int MINI_NUKE_COST = 35;
+    public static final int MIRV_COST = 60;
+    public static final int ORBITAL_COST = 80;
     public static final int LASER_BURST_COST = 5;
-    public static final int APOCALYPSE_COST = 95;
-    public static final int APOCALYPSE_PREPARE_TICKS = 60;
-    public static final int APOCALYPSE_STRIKES = 5;
-    public static final int RADIATION_DURATION = 20 * 30;
+    public static final int APOCALYPSE_COST = 100;
+    public static final int APOCALYPSE_PREPARE_TICKS = 100;
+    public static final int APOCALYPSE_STRIKES = 1;
+    public static final int RADIATION_DURATION = 20 * 120;
 
     private static final Map<UUID, LaserBurstState> LASER_BURSTS = new HashMap<>();
     private static final Map<UUID, ApocalypseState> APOCALYPSES = new HashMap<>();
     private static final List<RadiationZone> RADIATION = new ArrayList<>();
+    private static final Map<UUID, MirvState> MIRVS = new HashMap<>();
+    private static final Map<UUID, OrbitalState> ORBITALS = new HashMap<>();
 
     private NuclearAbilityManager() {
     }
 
-    public static void miniNuke(ServerPlayer player, ItemStack launcher) {
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, MINI_NUKE_COST)) return;
+    public static boolean basicBash(ServerPlayer player, LivingEntity target) {
+        if (target == player || !target.isAlive() || !LegendaryCombat.beginFree(player, 8)) return false;
+        LegendaryCombat.damage(player, target, 12f, 0.08f, LegendaryCombat.AttackKind.PHYSICAL);
+        Vec3 away = target.position().subtract(player.position());
+        if (away.lengthSqr() > 0.001) {
+            target.setDeltaMovement(away.normalize().scale(1.25).add(0, 0.35, 0));
+            target.hurtMarked = true;
+        }
+        PowerEventDispatcher.broadcast(player, PowerEventPayload.POWER_NUCLEAR, 0,
+                PowerEventPayload.PHASE_RELEASE, 8, 5);
+        return true;
+    }
+
+    public static void microNuke(ServerPlayer player, ItemStack launcher) {
+        if (!LegendaryCombat.begin(player, MICRO_NUKE_COST, 16)) return;
         spawnRocket(player, launcher, player.getLookAngle(), 7.5f);
         PowerEventDispatcher.broadcast(player, PowerEventPayload.POWER_NUCLEAR, 1,
-                PowerEventPayload.PHASE_RELEASE, 20, 12);
+                PowerEventPayload.PHASE_RELEASE, 20, 8);
+    }
+
+    public static void miniNuke(ServerPlayer player, ItemStack launcher) {
+        Vec3 target = aimedBlock(player, 300);
+        if (target == null || !LegendaryCombat.begin(player, MINI_NUKE_COST, 30)) return;
+        spawnNuke(player.serverLevel(), target, 50, 0.45f);
+        PowerEventDispatcher.broadcastAt(player, target, PowerEventPayload.POWER_NUCLEAR, 2,
+                PowerEventPayload.PHASE_RELEASE, 20 * 45, 50);
     }
 
     public static void mirv(ServerPlayer player, ItemStack launcher) {
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, MIRV_COST)) return;
-
-        for (int index = 0; index < 8; index++) {
-            double angle = (index - 3.5) * 0.105;
-            Vec3 direction = player.getLookAngle().yRot((float) angle)
-                    .add(0, 0.08 + Math.abs(index - 3.5) * 0.015, 0)
-                    .normalize();
-            spawnRocket(player, launcher, direction, 4.5f);
-        }
+        Vec3 target = aimedBlock(player, 300);
+        if (target == null || MIRVS.containsKey(player.getUUID())
+                || !LegendaryCombat.begin(player, MIRV_COST, 30)) return;
+        MIRVS.put(player.getUUID(), new MirvState(player.serverLevel().dimension(), target,
+                player.serverLevel().getGameTime() + 20, 8));
         PowerEventDispatcher.broadcast(player, PowerEventPayload.POWER_NUCLEAR, 2,
-                PowerEventPayload.PHASE_RELEASE, 30, 28);
+                PowerEventPayload.PHASE_PREPARE, 20, 70);
     }
 
     public static void orbitalStrike(ServerPlayer player) {
         Vec3 target = aimedBlock(player, 300);
-        if (target == null || !PlayerEnergyManager.tryConsumeOrNotify(player, ORBITAL_COST)) return;
-
-        spawnNuke(player.serverLevel(), target, 48);
+        if (target == null || ORBITALS.containsKey(player.getUUID())
+                || !LegendaryCombat.begin(player, ORBITAL_COST, 30)) return;
+        ORBITALS.put(player.getUUID(), new OrbitalState(player.serverLevel().dimension(), target,
+                player.serverLevel().getGameTime() + 100));
+        player.serverLevel().playSound(null, target.x, target.y, target.z,
+                ModSounds.LAUNCHER_SIREN, SoundSource.MASTER, 8f, 1f);
         PowerEventDispatcher.broadcastAt(player, target, PowerEventPayload.POWER_NUCLEAR, 3,
-                PowerEventPayload.PHASE_RELEASE, 120, 48);
+                PowerEventPayload.PHASE_PREPARE, 100, 100);
     }
 
     public static void laserBurst(ServerPlayer player) {
         if (LASER_BURSTS.containsKey(player.getUUID())) return;
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, LASER_BURST_COST)) return;
+        if (!LegendaryCombat.begin(player, LASER_BURST_COST, 8)) return;
 
         LASER_BURSTS.put(player.getUUID(), new LaserBurstState(
                 player.serverLevel().dimension(), player.serverLevel().getGameTime() + 80));
@@ -97,7 +120,8 @@ public final class NuclearAbilityManager {
     public static void apocalypse(ServerPlayer player) {
         if (APOCALYPSES.containsKey(player.getUUID())) return;
         Vec3 target = aimedBlock(player, 300);
-        if (target == null || !PlayerEnergyManager.tryConsumeOrNotify(player, APOCALYPSE_COST)) return;
+        if (target == null || !LegendaryCombat.begin(player, APOCALYPSE_COST,
+                APOCALYPSE_PREPARE_TICKS)) return;
 
         long releaseTick = player.serverLevel().getGameTime() + APOCALYPSE_PREPARE_TICKS;
         APOCALYPSES.put(player.getUUID(), new ApocalypseState(
@@ -124,10 +148,11 @@ public final class NuclearAbilityManager {
         level.addFreshEntity(rocket);
     }
 
-    private static void spawnNuke(ServerLevel level, Vec3 target, int radius) {
+    private static void spawnNuke(ServerLevel level, Vec3 target, int radius, float legendaryPercent) {
         double spawnY = Math.min(level.getMaxBuildHeight() - 12, target.y + 95);
         NukeEntity nuke = new NukeEntity(ModEntities.NUKE, level);
         nuke.setBlastRadius(radius);
+        nuke.setLegendaryPercent(legendaryPercent);
         nuke.setPos(target.x, spawnY, target.z);
         nuke.prepareForLaunch(level);
         if (!level.addFreshEntity(nuke)) nuke.discard();
@@ -148,9 +173,68 @@ public final class NuclearAbilityManager {
     }
 
     public static void tick(MinecraftServer server) {
+        tickHandling(server);
+        tickMirvs(server);
+        tickOrbitals(server);
         tickLaserBursts(server);
         tickApocalypses(server);
         tickRadiation(server);
+    }
+
+    private static void tickHandling(MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (player.getMainHandItem().getItem() instanceof RocketLauncherItem
+                    || player.getOffhandItem().getItem() instanceof RocketLauncherItem) {
+                player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 25, 0, true, false));
+            }
+        }
+    }
+
+    private static void tickMirvs(MinecraftServer server) {
+        Iterator<Map.Entry<UUID, MirvState>> iterator = MIRVS.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<UUID, MirvState> entry = iterator.next();
+            MirvState state = entry.getValue();
+            ServerLevel level = server.getLevel(state.dimension);
+            ServerPlayer owner = server.getPlayerList().getPlayer(entry.getKey());
+            if (level == null || owner == null) {
+                iterator.remove();
+                continue;
+            }
+            long now = level.getGameTime();
+            if (now < state.nextStrikeTick) continue;
+            int index = 8 - state.remaining;
+            double angle = index * Math.PI * 2 / 8.0;
+            double distance = index == 0 ? 0 : 18 + (index % 3) * 8;
+            Vec3 target = state.center.add(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
+            spawnNuke(level, target, 18, 0.18f);
+            state.remaining--;
+            state.nextStrikeTick = now + 16;
+            if (state.remaining <= 0) {
+                PowerEventDispatcher.broadcastAt(owner, state.center, PowerEventPayload.POWER_NUCLEAR, 3,
+                        PowerEventPayload.PHASE_RELEASE, 160, 70);
+                iterator.remove();
+            }
+        }
+    }
+
+    private static void tickOrbitals(MinecraftServer server) {
+        Iterator<Map.Entry<UUID, OrbitalState>> iterator = ORBITALS.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<UUID, OrbitalState> entry = iterator.next();
+            OrbitalState state = entry.getValue();
+            ServerLevel level = server.getLevel(state.dimension);
+            ServerPlayer owner = server.getPlayerList().getPlayer(entry.getKey());
+            if (level == null || owner == null) {
+                iterator.remove();
+                continue;
+            }
+            if (level.getGameTime() < state.releaseTick) continue;
+            spawnNuke(level, state.center, 100, 0.70f);
+            PowerEventDispatcher.broadcastAt(owner, state.center, PowerEventPayload.POWER_NUCLEAR, 4,
+                    PowerEventPayload.PHASE_RELEASE, 20 * 60, 100);
+            iterator.remove();
+        }
     }
 
     private static void tickLaserBursts(MinecraftServer server) {
@@ -220,11 +304,11 @@ public final class NuclearAbilityManager {
                 double angle = index * Math.PI * 2 / APOCALYPSE_STRIKES;
                 double distance = index == 0 ? 0 : 32;
                 Vec3 target = state.center.add(Math.cos(angle) * distance, 0, Math.sin(angle) * distance);
-                spawnNuke(level, target, 65);
+                spawnNuke(level, target, 120, 0.85f);
                 state.remainingStrikes--;
                 state.nextStrikeTick = now + 20;
             }
-            if (state.remainingStrikes == 0 && now >= state.nextStrikeTick + 20) {
+            if (state.remainingStrikes == 0 && now >= state.nextStrikeTick + 20 * 60) {
                 PowerEventDispatcher.broadcastAt(owner, state.center, PowerEventPayload.POWER_NUCLEAR, 6,
                         PowerEventPayload.PHASE_AFTERMATH, RADIATION_DURATION, 90);
                 iterator.remove();
@@ -260,12 +344,22 @@ public final class NuclearAbilityManager {
     public static void clearPlayer(UUID playerId) {
         LASER_BURSTS.remove(playerId);
         APOCALYPSES.remove(playerId);
+        MIRVS.remove(playerId);
+        ORBITALS.remove(playerId);
+    }
+
+    public static int clearRadiation() {
+        int count = RADIATION.size();
+        RADIATION.clear();
+        return count;
     }
 
     public static void clear() {
         LASER_BURSTS.clear();
         APOCALYPSES.clear();
         RADIATION.clear();
+        MIRVS.clear();
+        ORBITALS.clear();
     }
 
     private record LaserBurstState(ResourceKey<Level> dimension, long endTick) {
@@ -296,5 +390,22 @@ public final class NuclearAbilityManager {
     }
 
     private record RadiationZone(ResourceKey<Level> dimension, Vec3 center, int radius, long endTick) {
+    }
+
+    private static final class MirvState {
+        private final ResourceKey<Level> dimension;
+        private final Vec3 center;
+        private long nextStrikeTick;
+        private int remaining;
+
+        private MirvState(ResourceKey<Level> dimension, Vec3 center, long nextStrikeTick, int remaining) {
+            this.dimension = dimension;
+            this.center = center;
+            this.nextStrikeTick = nextStrikeTick;
+            this.remaining = remaining;
+        }
+    }
+
+    private record OrbitalState(ResourceKey<Level> dimension, Vec3 center, long releaseTick) {
     }
 }

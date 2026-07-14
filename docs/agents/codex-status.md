@@ -2,30 +2,37 @@
 
 ## Current Task
 
-Completed the true Claude/Codex integration and the six final gameplay blocks on `codex-integration-ready`. This branch descends from Claude visual commit `cb925cb` and complete Codex server commit `2ca01ef`.
+Completed the authoritative 2026-07-14 character/ability revision on `codex-integration-ready`. The verified release candidate is version `0.5.0` and is ready for review/merge; no further Codex files are currently reserved.
 
-## Files I Plan to Touch Next
+## Files Touched
 
-None for this work block. Future changes should begin with a fresh status update.
+- `server/`: all ability managers plus new shared combat/commitment helpers
+- `item/`: Yamato, Six Eyes, Stone Mask, Kyoka Suigetsu, Shadow Dagger, Rocket Launcher, and Infinity Core ability entry points
+- `network/`: HUD/selection state only if the existing payloads cannot express it safely
+- existing registered sounds and `PowerEventPayload`: supplied reference-sound event wiring
+- `client/hud/`: selected-ability and collapsed HUD presentation
+- `client/animation/YamatoPlayerAnimations.java` and `assets/overpowered/player_animations/`: revised Yamato combo/commitment poses
+- `client/render/PowerEventPresentation.java`: presentation of new staged events using the existing render contract
+- `gradle.properties`: coordinated version bump for the rewritten test build
+- `docs/agents/codex-status.md`, `docs/agents/shared-decisions.md`, and `docs/agents/merge-queue.md`
 
-## Completed
+## Completed In This Block
 
-- Recovered Claude branch `cb925cb` and proved its earlier merge used old Codex commit `9aca9d6` rather than `2ca01ef`.
-- Created the real integration at `c04ac55` with both complete parents.
-- Finished bounded DIO Time Rewind, phased Absolute Void, phased Nuclear Apocalypse, Yamato Air Trick/Dimension Rift/Devil Trigger/Final Judgment Cut, and passive Gojo Infinity.
-- Completed Aizen's targeted per-player illusion lifecycle: immediate start, refresh, expiry, perfect state, local distortion, and false caster afterimages.
-- Replaced `MockPowerHudData` with live server-synced energy, exact costs, affordability, active forms, and Infinity Core time remaining.
-- Added direct `Z/X/C/V/B/G` ability inputs and retained `R/H/O` special controls.
-- Added `EnergyStatePayload` and `PowerEventPayload` client receivers while preserving server authority.
-- Added five missing item models and reference-grounded 32x32 textures: DIO knife, Stone Mask, Kyoka Suigetsu, Shadow Dagger, and Infinity Core.
-- Updated README controls and full roster documentation.
-- Verification complete: clean Gradle build, JSON/language/model/texture/sound/network audit, dedicated-server bootstrap, and client resource/render smoke test with zero missing models or fatal markers.
+- Read the new 563-line specification in full.
+- Compared its universal rules and seven character kits with the current integrated implementation.
+- Confirmed Claude has no active conflicting work and documented the visual/shared-file scope before editing.
+- Rebuilt all seven kits around the shared 100-energy economy and explicit ordinary/legendary damage contract.
+- Added the missing/reworked Yamato, Gojo, Void, DIO, Aizen, Shadow Monarch, and Fat Man mechanics, including staged ultimates and cleanup commands for persistent effects.
+- Reworked the live HUD, selected-ability state, Infinity presentation, Yamato player/item animation commitments, and supplied reference-sound triggers.
+- Bumped the mod to `0.5.0` and rewrote the player-facing control/reference documentation.
+- Passed JSON validation, `git diff --check`, a clean Gradle build, dedicated-server initialization, and client resource/render/audio initialization.
 
 ## Blocked On
 
-Nothing.
+Nothing. Supplied references and existing converted `.ogg` assets are available locally.
 
 ## Notes for Claude
 
-- `codex-integration-ready` already contains Claude commit `cb925cb`; do not merge the older `5c66be8` integration on top.
-- Any later Claude visual polish should branch/rebase from the final Codex integration commit to retain server commit `2ca01ef` and this completion pass.
+- The 2026-07-14 comprehensive specification supersedes conflicting costs, durations, damage and ability roles in the older master document.
+- This pass preserves the existing GeckoLib/render contracts and extends presentation through `PowerEventPayload`.
+- The supplied asset folder contained audio and still-image references but no motion clips; existing rigs were preserved and the Yamato commitments were extended without replacing rig geometry.

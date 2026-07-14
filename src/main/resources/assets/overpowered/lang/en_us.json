@@ -105,5 +105,13 @@
   "subtitles.overpowered.launcher.nuke_fall": "A nuclear payload descends",
   "key.overpowered.hud_toggle": "Toggle Power HUD",
   "message.overpowered.yamato.no_target": "Air Trick needs a living target near the crosshair",
-  "message.overpowered.yamato.no_space": "No safe space behind the target"
+  "message.overpowered.yamato.no_space": "No safe space behind the target",
+  "message.overpowered.technique.maximum_blue": "Technique: Maximum Blue",
+  "message.overpowered.technique.infinity_focus": "Technique: Infinity Focus",
+  "message.overpowered.dio.vampire_strike": "Ability: Vampire Strike",
+  "message.overpowered.dio.temporal_lock": "Ability: Temporal Lock",
+  "message.overpowered.aizen.kurohitsugi": "Ability: Kurohitsugi",
+  "message.overpowered.shadow.authority": "Ability: Ruler's Authority",
+  "message.overpowered.void.step": "Ability: Void Step",
+  "message.overpowered.void.grasp": "Ability: Void Grasp"
 }

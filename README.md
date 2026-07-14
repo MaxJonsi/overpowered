@@ -14,36 +14,38 @@ All keys can be remapped in Minecraft's Controls menu.
 | `V` | Ability 4 |
 | `B` | Ability 5, when the current power has one |
 | `G` | Ultimate |
-| `R` | Weapon special, dash, or cycle mode |
-| `H` | Mark target or Yamato Dimension Rift |
-| `O` | Toggle the power HUD |
+| `R` | Weapon special, transformation, or cycle mode |
+| `H` | Context action: target mark, Dimension Rift, or Time Dash |
+| `O` | Collapse or expand the power HUD |
 
-Yamato also has its three-hit left-click combo, right-click Judgment Cut, charged Judgment Cut End, and `R` dash. Right-click the Void Orb to enter or leave Void form. Gojo techniques require the Gojo Mask in the helmet slot and Six Eyes in either hand.
+Basic attacks cost no energy. Yamato uses a five-hit left-click combo; `Shift+R` toggles Devil Trigger and `H` opens/closes a 15-second linked Dimension Rift. Right-click the Void Orb to enter or leave Void form. Gojo techniques require the Gojo Mask in the helmet slot and Six Eyes in either hand. `Shift+Z` casts Maximum Blue and `Shift+R` toggles passive Infinity. Shadow Monarch Form also uses `Shift+R`.
 
 ## Power roster
 
 | Power item | `Z` | `X` | `C` | `V` | `B` | `G` |
 |---|---|---|---|---|---|---|
-| Yamato | Judgment Cut | Air Trick | Dimension Rift | Devil Trigger | — | Final Judgment Cut |
-| Six Eyes + Gojo Mask | Blue | Red | Infinity on/off | Teleport | Hollow Purple | Unlimited Void |
-| Void Orb, transformed | Void Touch | Void Gaze | Void Wave | Absolute Silence | — | Absolute Void |
-| Stone Mask | Knife Throw | Time Dash | Time Stop | Time Acceleration | — | Time Rewind |
-| Kyoka Suigetsu | Flash Step | Per-player Hypnosis | Spiritual Pressure | Hogyoku Evolution | — | Perfect Hypnosis |
-| Shadow Dagger | Shadow Step | Shadow Exchange | Shadow Extraction | Summon Shadow | Monarch Form | Shadow Domain |
-| Devastator Launcher | Mini Nuke | MIRV | Orbital Strike | Laser Burst | — | Nuclear Apocalypse |
+| Yamato | Rapid Slash | Judgment Cut | Air Trick | Yamato Counter | World Split | Final Judgment Cut End |
+| Six Eyes + Gojo Mask | Blue / Maximum Blue | Red | Infinity Focus | Teleport | Hollow Purple | Unlimited Void |
+| Void Orb, transformed | Void Step | Void Touch | Void Gaze | Void Grasp | Absolute Silence | Absolute Void |
+| Stone Mask | Vampire Strike | Knife Throw | Temporal Lock | Time Stop | Time Acceleration | Time Rewind |
+| Kyoka Suigetsu | Flash Step | Per-player Hypnosis | Spiritual Pressure | Kurohitsugi | Hogyoku Evolution | Perfect Hypnosis |
+| Shadow Dagger | Shadow Step | Ruler's Authority | Shadow Exchange | Shadow Extraction | Summon Shadow | Shadow Domain |
+| Devastator Launcher | Micro-Nuke | Mini Nuke | MIRV | Orbital Strike | — | Nuclear Apocalypse |
 
-Gojo's Infinity activates passively whenever the complete Gojo loadout is equipped. `C` deliberately suppresses or re-enables it. A blocked hit consumes energy; if energy is exhausted, Infinity switches off until the player re-enables it.
+Gojo's Infinity activates passively whenever the complete Gojo loadout is equipped. Physical projectiles remain suspended in the world and resume when Infinity is disabled or Gojo moves away. Infinity drains 0.5 energy per second; Infinity Focus strengthens it for ten seconds.
 
-DIO's rewind uses a bounded six-second local history. It restores ordinary blocks and living-entity position, motion, rotation, and health inside a limited area; block entities are protected and the restore work is spread over server ticks.
+DIO's rewind uses a bounded five-second local history. It restores ordinary blocks and living-entity position, motion, rotation, and health inside a limited area; block entities are protected and the restore work is spread over server ticks.
 
 Aizen's hypnosis state is sent only to the affected player. The victim receives false caster afterimages and screen distortion while other players retain their real view.
+
+`/overpowered cleanup radiation` clears active radiation fields and `/overpowered cleanup void_shadows` removes loaded persistent Void shadows. Both require operator permission level 2.
 
 ## Energy and HUD
 
 - Energy is server-authoritative and ranges from 0 to 100.
-- It regenerates automatically when not infinite.
-- The HUD shows the real synced value, exact ability costs, affordability, active forms, and Infinity Core time remaining.
-- Right-clicking the Infinity Core grants five minutes of infinite energy.
+- It regenerates at four points per second when not infinite.
+- The expanded HUD shows the real synced value, selected ability, exact costs, affordability, active forms, and Infinity Core time remaining. The collapsed HUD retains the emblem, energy and selected ability.
+- Right-clicking the Infinity Core grants five minutes of infinite energy without removing animation commitments.
 
 ## Installation
 
@@ -58,7 +60,7 @@ Aizen's hypnosis state is sent only to the affected player. The victim receives 
 ./gradlew build
 ```
 
-The playable remapped JAR is written to `build/libs/overpowered-0.4.0.jar`.
+The playable remapped JAR is written to `build/libs/overpowered-0.5.0.jar`.
 
 ## Content and redistribution note
 

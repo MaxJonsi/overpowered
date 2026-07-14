@@ -20,10 +20,10 @@ public class ShadowDaggerItem extends Item {
     private static final int[] SLOT_BY_MODE = {1, 2, 3, 4, 5, 6};
     private static final String[] MODE_KEYS = {
             "message.overpowered.shadow.step",
+            "message.overpowered.shadow.authority",
             "message.overpowered.shadow.exchange",
             "message.overpowered.shadow.extract",
             "message.overpowered.shadow.summon",
-            "message.overpowered.shadow.monarch",
             "message.overpowered.shadow.domain"};
 
     public ShadowDaggerItem(Properties properties) {
@@ -60,9 +60,6 @@ public class ShadowDaggerItem extends Item {
 
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof ServerPlayer player) {
-            target.hurt(player.damageSources().indirectMagic(player, player), 5f);
-        }
         return true;
     }
 
@@ -75,10 +72,10 @@ public class ShadowDaggerItem extends Item {
     public void performSlot(ServerPlayer player, int slot) {
         switch (slot) {
             case 1 -> ShadowAbilityManager.shadowStep(player);
-            case 2 -> ShadowAbilityManager.shadowExchange(player);
-            case 3 -> ShadowAbilityManager.extract(player);
-            case 4 -> ShadowAbilityManager.summon(player);
-            case 5 -> ShadowAbilityManager.toggleMonarchForm(player);
+            case 2 -> ShadowAbilityManager.rulersAuthority(player);
+            case 3 -> ShadowAbilityManager.shadowExchange(player);
+            case 4 -> ShadowAbilityManager.extract(player);
+            case 5 -> ShadowAbilityManager.summon(player);
             case 6 -> ShadowAbilityManager.shadowDomain(player);
             default -> {
             }

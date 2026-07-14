@@ -37,7 +37,26 @@ public final class PowerEventPresentation {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             ClientPowerEventState.tick();
             tickIllusionParticles(client);
+            tickInfinityCoreAura(client);
         });
+    }
+
+    private static void tickInfinityCoreAura(Minecraft client) {
+        if (client.level == null || client.level.getGameTime() % 3 != 0) return;
+        ClientPowerEventState.ActiveEvent event = ClientPowerEventState.strongest(
+                PowerEventPayload.POWER_INFINITY_CORE, 1);
+        if (event == null) return;
+        Entity source = client.level.getEntity(event.payload().sourceEntityId());
+        if (source == null) return;
+        double angle = client.level.getGameTime() * 0.18;
+        client.level.addParticle(new DustParticleOptions(new Vector3f(1f, 0.86f, 0.35f), 1.0f),
+                source.getX() + Math.cos(angle) * 0.7,
+                source.getY() + 0.35 + client.level.random.nextDouble() * 1.4,
+                source.getZ() + Math.sin(angle) * 0.7, 0, 0.02, 0);
+        client.level.addParticle(ParticleTypes.END_ROD,
+                source.getX() - Math.cos(angle) * 0.7,
+                source.getY() + 0.3 + client.level.random.nextDouble() * 1.5,
+                source.getZ() - Math.sin(angle) * 0.7, 0, 0.01, 0);
     }
 
     public static void receive(PowerEventPayload payload) {

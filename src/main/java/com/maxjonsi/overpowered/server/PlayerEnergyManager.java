@@ -15,7 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
  */
 public final class PlayerEnergyManager {
     public static final int MAX_ENERGY = 100;
-    public static final int REGEN_INTERVAL_TICKS = 10;
+    public static final int REGEN_INTERVAL_TICKS = 5;
     public static final int REGEN_PER_INTERVAL = 1;
     public static final int INFINITY_DURATION_TICKS = 20 * 60 * 5;
 

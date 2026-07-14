@@ -51,8 +51,8 @@ public class RocketLauncherItem extends Item implements GeoItem {
     public static final int MODE_ORBITAL = 4;
     public static final int MODE_APOCALYPSE = 5;
 
-    public static final int HOMING_COST = 8;
-    public static final int NUKE_COST = 80;
+    public static final int HOMING_COST = 15;
+    public static final int NUKE_COST = 35;
     public static final int LASER_START_COST = 5;
     public static final int LASER_TICK_COST = 1;
     public static final int LASER_ENERGY_INTERVAL_TICKS = 5;
@@ -155,49 +155,19 @@ public class RocketLauncherItem extends Item implements GeoItem {
     }
 
     private void fireHomingRocket(ServerLevel level, ServerPlayer player, ItemStack stack) {
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, HOMING_COST)) return;
-
-        Vec3 eye = player.getEyePosition();
-        Vec3 look = player.getLookAngle();
-
-        HomingRocketEntity rocket = new HomingRocketEntity(ModEntities.HOMING_ROCKET, level);
-        rocket.setOwner(player);
-        Vec3 spawn = eye.add(look.scale(1.2)).subtract(0, 0.2, 0);
-        rocket.setPos(spawn.x, spawn.y, spawn.z);
-        rocket.setDeltaMovement(look.scale(1.4));
-
-        UUID targetId = stack.get(ModDataComponents.TARGET);
-        if (targetId != null && level.getEntity(targetId) instanceof LivingEntity target && target.isAlive()) {
-            rocket.setTargetId(target.getId());
-        }
-        level.addFreshEntity(rocket);
+        NuclearAbilityManager.microNuke(player, stack);
 
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_FIRE, SoundSource.PLAYERS, 1.5f, 1f);
         triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "fire");
-        player.getCooldowns().addCooldown(this, 15);
+        player.getCooldowns().addCooldown(this, 8);
     }
 
     private void callNuclearStrike(ServerLevel level, ServerPlayer player, ItemStack stack) {
-        Vec3 eye = player.getEyePosition();
-        Vec3 look = player.getLookAngle();
-        BlockHitResult hit = level.clip(new ClipContext(eye, eye.add(look.scale(300)), ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, player));
-        if (hit.getType() != HitResult.Type.BLOCK) return;
-        if (!PlayerEnergyManager.tryConsumeOrNotify(player, NUKE_COST)) return;
-
-        Vec3 target = hit.getLocation();
-        double spawnY = Math.min(level.getMaxBuildHeight() - 12, target.y + 90);
-        NukeEntity nuke = new NukeEntity(ModEntities.NUKE, level);
-        nuke.setPos(target.x, spawnY, target.z);
-        nuke.prepareForLaunch(level);
-        if (!level.addFreshEntity(nuke)) {
-            nuke.discard();
-            return;
-        }
-
+        NuclearAbilityManager.miniNuke(player, stack);
         level.playSound(null, player.getX(), player.getY(), player.getZ(), ModSounds.LAUNCHER_FIRE, SoundSource.PLAYERS, 1.5f, 0.7f);
         triggerAnim(player, GeoItem.getOrAssignId(stack, level), "base", "fire");
         player.displayClientMessage(Component.translatable(MODE_KEYS[MODE_NUKE]), true);
-        player.getCooldowns().addCooldown(this, 1200);
+        player.getCooldowns().addCooldown(this, 30);
     }
 
     @Override

@@ -12,10 +12,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 public class StoneMaskItem extends Item {
-    private static final int[] SLOT_BY_MODE = {1, 2, 3, 4, 6};
+    private static final int[] SLOT_BY_MODE = {1, 2, 3, 4, 5, 6};
     private static final String[] MODE_KEYS = {
+            "message.overpowered.dio.vampire_strike",
             "message.overpowered.dio.knives",
-            "message.overpowered.dio.time_dash",
+            "message.overpowered.dio.temporal_lock",
             "message.overpowered.dio.time_stop",
             "message.overpowered.dio.acceleration",
             "message.overpowered.dio.rewind"};
@@ -48,10 +49,11 @@ public class StoneMaskItem extends Item {
 
     public void performSlot(ServerPlayer player, int slot) {
         switch (slot) {
-            case 1 -> TimeAbilityManager.throwKnives(player);
-            case 2 -> TimeAbilityManager.timeDash(player);
-            case 3 -> TimeAbilityManager.timeStop(player);
-            case 4 -> TimeAbilityManager.accelerate(player);
+            case 1 -> TimeAbilityManager.vampireStrike(player);
+            case 2 -> TimeAbilityManager.throwKnives(player);
+            case 3 -> TimeAbilityManager.temporalLock(player);
+            case 4 -> TimeAbilityManager.timeStop(player);
+            case 5 -> TimeAbilityManager.accelerate(player);
             case 6 -> TimeAbilityManager.rewind(player);
             default -> {
             }

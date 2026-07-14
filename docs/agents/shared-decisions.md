@@ -63,3 +63,12 @@ Normal and Perfect Hypnosis send targeted state packets only to affected players
 
 ### [2026-07-14] Missing item art direction
 The five missing inventory sprites use reference-derived Minecraft pixel art. Infinity Core had no supplied object reference, so its approved first-pass direction follows the existing gold infinite-energy language with restrained cyan highlights. Source generation used removable chroma backgrounds; shipped textures are 32x32 transparent PNGs.
+
+### [2026-07-14] Comprehensive specification is authoritative
+The user-supplied `ULTIMATE POWERS MOD — Comprehensive Character, Ability, Animation, Damage and Atmosphere Specification` is the current source of truth. Where it conflicts with the older master document or implemented placeholder values, the comprehensive specification wins. Shared rules are: 100 maximum energy, 4 energy/second baseline regeneration, free basic attacks, short server-authoritative animation commitments, and 100-energy ultimates.
+
+### [2026-07-14] Legendary combat damage contract
+Attacks with a percentage value use that value against players actively using a legendary loadout and retain their stated fixed damage against ordinary entities. Percentage hits are based on the target's maximum health and use the normal damage pipeline so character defences still participate unless the ability is explicitly spatial, temporal, conceptual, or world-level. This prevents ordinary lethal values from making every legendary duel a one-hit kill.
+
+### [2026-07-14] Integrated visual revision ownership
+For this user-requested completion pass, Codex may revise the existing Yamato player-animation definitions, HUD presentation, supplied reference-sound wiring, and generic `PowerEventPresentation` while preserving the established GeckoLib/playerAnimator split and renderer registrations. New visual work should consume server-authored event phases; it must not move gameplay authority to the client.

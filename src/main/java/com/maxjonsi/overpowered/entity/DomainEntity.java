@@ -1,6 +1,7 @@
 package com.maxjonsi.overpowered.entity;
 
 import com.maxjonsi.overpowered.registry.ModSounds;
+import com.maxjonsi.overpowered.server.LegendaryCombat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -13,6 +14,7 @@ import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -20,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class DomainEntity extends EffectEntity {
     public static final double RADIUS = 25;
-    private static final int LIFETIME = 300;
+    private static final int LIFETIME = 240;
     private static final Map<UUID, DomainEntity> ACTIVE = new ConcurrentHashMap<>();
 
     private final Map<UUID, Vec3> frozenPositions = new HashMap<>();
@@ -37,6 +39,12 @@ public class DomainEntity extends EffectEntity {
 
     public boolean isInside(Entity entity) {
         return entity.position().distanceToSqr(position()) <= RADIUS * RADIUS;
+    }
+
+    public static boolean isTrapped(Entity entity) {
+        return ACTIVE.values().stream().anyMatch(domain -> domain.isAlive()
+                && domain.ownerId != null && !domain.ownerId.equals(entity.getUUID())
+                && domain.level() == entity.level() && domain.isInside(entity));
     }
 
     @Override
@@ -64,6 +72,13 @@ public class DomainEntity extends EffectEntity {
             target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 15, 10, true, false));
             target.addEffect(new MobEffectInstance(MobEffects.DARKNESS, 30, 0, true, false));
             target.fallDistance = 0;
+            if (tickCount % 20 == 0) {
+                Player owner = getOwnerPlayer();
+                LegendaryCombat.damage(target,
+                        owner != null ? level.damageSources().indirectMagic(owner, owner)
+                                : level.damageSources().magic(),
+                        5f, 0.025f, LegendaryCombat.AttackKind.CONCEPTUAL);
+            }
         }
 
         if (tickCount >= LIFETIME || (tickCount % 20 == 0 && getOwnerPlayer() == null)) {

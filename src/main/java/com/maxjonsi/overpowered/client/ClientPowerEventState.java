@@ -82,14 +82,15 @@ public final class ClientPowerEventState {
     private static String buffLabel(PowerEventPayload event) {
         return switch (event.power()) {
             case PowerEventPayload.POWER_YAMATO -> event.ability() == 4 ? "Devil Trigger" : null;
-            case PowerEventPayload.POWER_GOJO -> event.ability() == 3 ? "Infinity: ACTIVE" : null;
-            case PowerEventPayload.POWER_VOID -> event.ability() == 4 ? "Absolute Silence" : null;
+            case PowerEventPayload.POWER_GOJO -> event.ability() == 3 ? "Infinity: ACTIVE"
+                    : event.ability() == 6 ? "Infinity Focus" : null;
+            case PowerEventPayload.POWER_VOID -> event.ability() == 5 ? "Absolute Silence" : null;
             case PowerEventPayload.POWER_DIO -> event.ability() == 3 ? "Time Stop"
                     : event.ability() == 4 ? "Time Acceleration" : null;
             case PowerEventPayload.POWER_AIZEN -> event.ability() == 4
                     ? "Hogyoku: Stage " + Math.max(1, event.detail()) : null;
             case PowerEventPayload.POWER_SHADOW -> event.ability() == 5 ? "Monarch Form" : null;
-            case PowerEventPayload.POWER_NUCLEAR -> event.ability() == 4 ? "Annihilation Beam" : null;
+            case PowerEventPayload.POWER_NUCLEAR -> null;
             case PowerEventPayload.POWER_INFINITY_CORE -> "Infinity Core";
             default -> null;
         };

@@ -43,7 +43,7 @@ public class JudgementCutRenderer extends EntityRenderer<JudgementCutEntity> {
         // space "tensing": faint violet sphere, grows fast, dies before the shatter
         float sphereAlpha = Mth.clamp((18f - t) / 3f, 0f, 1f) * Math.min(1f, t / 3f);
         if (sphereAlpha > 0f) {
-            float radius = 2.5f * Math.min(1f, t / 4f);
+            float radius = (entity.isPerfect() ? 3.6f : 2.5f) * Math.min(1f, t / 4f);
             poseStack.pushPose();
             poseStack.mulPose(Axis.YP.rotationDegrees(t * 1.5f));
             VertexConsumer sphere = bufferSource.getBuffer(RenderType.entityTranslucentEmissive(CHURN));
@@ -58,7 +58,8 @@ public class JudgementCutRenderer extends EntityRenderer<JudgementCutEntity> {
         RandomSource rand = RandomSource.create(entity.getId() * 31L + 7L);
         VertexConsumer slash = bufferSource.getBuffer(RenderType.entityTranslucentEmissive(SLASH));
         for (int burst : BURSTS) {
-            for (int j = 0; j < SLASHES_PER_BURST; j++) {
+            int slashes = entity.isPerfect() ? 8 : SLASHES_PER_BURST;
+            for (int j = 0; j < slashes; j++) {
                 Quaternionf orient = new Quaternionf().rotationXYZ(
                         rand.nextFloat() * Mth.TWO_PI, rand.nextFloat() * Mth.TWO_PI, rand.nextFloat() * Mth.TWO_PI);
                 float len = 2.6f + rand.nextFloat() * 1.0f;

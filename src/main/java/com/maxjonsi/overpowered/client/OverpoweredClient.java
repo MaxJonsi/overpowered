@@ -72,30 +72,38 @@ public class OverpoweredClient implements ClientModInitializer {
                 client.player.fallDistance = 0;
             }
             while (ModKeyMappings.SPECIAL.consumeClick()) {
+                ClientAbilitySelection.select(client.player.isShiftKeyDown() ? "Shift+R" : "R");
                 ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.SPECIAL));
             }
             while (ModKeyMappings.MARK.consumeClick()) {
+                ClientAbilitySelection.select("H");
                 ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.MARK));
             }
             while (ModKeyMappings.HUD_TOGGLE.consumeClick()) {
                 LegendaryHudRenderer.toggleVisibility();
             }
             while (ModKeyMappings.ABILITY_ONE.consumeClick()) {
+                ClientAbilitySelection.select(client.player.isShiftKeyDown() ? "Shift+Z" : "Z");
                 ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.ABILITY_ONE));
             }
             while (ModKeyMappings.ABILITY_TWO.consumeClick()) {
+                ClientAbilitySelection.select("X");
                 ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.ABILITY_TWO));
             }
             while (ModKeyMappings.ABILITY_THREE.consumeClick()) {
+                ClientAbilitySelection.select("C");
                 ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.ABILITY_THREE));
             }
             while (ModKeyMappings.ABILITY_FOUR.consumeClick()) {
+                ClientAbilitySelection.select("V");
                 ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.ABILITY_FOUR));
             }
             while (ModKeyMappings.ABILITY_FIVE.consumeClick()) {
+                ClientAbilitySelection.select("B");
                 ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.ABILITY_FIVE));
             }
             while (ModKeyMappings.ULTIMATE.consumeClick()) {
+                ClientAbilitySelection.select("G");
                 ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.ULTIMATE));
             }
         });
@@ -103,12 +111,13 @@ public class OverpoweredClient implements ClientModInitializer {
         ClientPreAttackCallback.EVENT.register((client, player, clickCount) -> {
             if (ClientVoidState.isActive(player.getId())) {
                 if (clickCount > 0) {
-                    ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.VOID_KILL));
+                    ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.SWING));
                 }
                 return true;
             }
             if (clickCount > 0 && player.getMainHandItem().getItem() instanceof YamatoItem) {
                 ClientPlayNetworking.send(new AbilityActionPayload(AbilityActionPayload.SWING));
+                return true;
             }
             return false;
         });
@@ -139,6 +148,7 @@ public class OverpoweredClient implements ClientModInitializer {
             ClientVoidState.clear();
             ClientEnergyState.clear();
             ClientPowerEventState.clear();
+            ClientAbilitySelection.clear();
             SkyTearState.clear();
         }));
     }

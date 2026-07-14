@@ -17,11 +17,12 @@ import net.minecraft.world.item.component.ItemAttributeModifiers;
 import net.minecraft.world.level.Level;
 
 public class KyokaSuigetsuItem extends Item {
-    private static final int[] SLOT_BY_MODE = {1, 2, 3, 4, 6};
+    private static final int[] SLOT_BY_MODE = {1, 2, 3, 4, 5, 6};
     private static final String[] MODE_KEYS = {
             "message.overpowered.aizen.flash_step",
             "message.overpowered.aizen.hypnosis",
             "message.overpowered.aizen.pressure",
+            "message.overpowered.aizen.kurohitsugi",
             "message.overpowered.aizen.evolution",
             "message.overpowered.aizen.perfect_hypnosis"};
 
@@ -59,9 +60,6 @@ public class KyokaSuigetsuItem extends Item {
 
     @Override
     public boolean hurtEnemy(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        if (attacker instanceof ServerPlayer player) {
-            target.hurt(player.damageSources().indirectMagic(player, player), 6f);
-        }
         return true;
     }
 
@@ -76,7 +74,8 @@ public class KyokaSuigetsuItem extends Item {
             case 1 -> AizenAbilityManager.flashStep(player);
             case 2 -> AizenAbilityManager.hypnotize(player);
             case 3 -> AizenAbilityManager.spiritualPressure(player);
-            case 4 -> AizenAbilityManager.evolve(player);
+            case 4 -> AizenAbilityManager.kurohitsugi(player);
+            case 5 -> AizenAbilityManager.evolve(player);
             case 6 -> AizenAbilityManager.perfectHypnosis(player);
             default -> {
             }

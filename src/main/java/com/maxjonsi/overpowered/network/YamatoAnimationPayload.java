@@ -10,10 +10,14 @@ public record YamatoAnimationPayload(int entityId, int animation) implements Cus
     public static final int SLASH_1 = 0;
     public static final int SLASH_2 = 1;
     public static final int SLASH_3 = 2;
-    public static final int JUDGEMENT_CUT = 3;
-    public static final int SHEATH = 4;
-    public static final int UNLEASH = 5;
-    public static final int DASH = 6;
+    public static final int SLASH_4 = 3;
+    public static final int SLASH_5 = 4;
+    public static final int JUDGEMENT_CUT = 5;
+    public static final int SHEATH = 6;
+    public static final int UNLEASH = 7;
+    public static final int DASH = 8;
+    public static final int COUNTER = 9;
+    public static final int WORLD_SPLIT = 10;
 
     public static final Type<YamatoAnimationPayload> TYPE = new Type<>(Overpowered.id("yamato_animation"));
     public static final StreamCodec<ByteBuf, YamatoAnimationPayload> STREAM_CODEC = StreamCodec.composite(

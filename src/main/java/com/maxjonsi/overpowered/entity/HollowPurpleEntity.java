@@ -1,14 +1,21 @@
 package com.maxjonsi.overpowered.entity;
 
 import com.maxjonsi.overpowered.registry.ModSounds;
+import com.maxjonsi.overpowered.server.LegendaryCombat;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -19,6 +26,7 @@ import org.joml.Vector3f;
 
 public class HollowPurpleEntity extends EffectEntity {
     private static final int ERASE_RADIUS = 3;
+    private final Set<UUID> damaged = new HashSet<>();
 
     public HollowPurpleEntity(EntityType<?> type, Level level) {
         super(type, level);
@@ -39,8 +47,15 @@ public class HollowPurpleEntity extends EffectEntity {
                 ? level.damageSources().indirectMagic(owner, owner)
                 : level.damageSources().magic();
         for (LivingEntity target : level.getEntitiesOfClass(LivingEntity.class,
-                new AABB(position(), position()).inflate(3.5), this::isVictim)) {
-            target.hurt(source, 40f);
+                new AABB(position(), position()).inflate(3.5),
+                target -> isVictim(target) && damaged.add(target.getUUID()))) {
+            LegendaryCombat.damage(target, source, 10000f, 0.80f,
+                    LegendaryCombat.AttackKind.CONCEPTUAL);
+            LegendaryCombat.stagger(target, 80, 4);
+        }
+        for (ItemEntity item : level.getEntitiesOfClass(ItemEntity.class,
+                new AABB(position(), position()).inflate(3.5), Entity::isAlive)) {
+            item.discard();
         }
 
         for (int i = 0; i < 14; i++) {
@@ -61,13 +76,15 @@ public class HollowPurpleEntity extends EffectEntity {
         }
 
         if (tickCount >= 90) {
-            level.sendParticles(ParticleTypes.EXPLOSION_EMITTER, getX(), getY(), getZ(), 2, 1, 1, 1, 0);
-            level.playSound(null, getX(), getY(), getZ(), ModSounds.MAGIC_EXPLOSION, SoundSource.PLAYERS, 3f, 0.8f);
+            level.sendParticles(ParticleTypes.WITCH, getX(), getY(), getZ(), 20, 2, 2, 2, 0.02);
             discard();
         }
     }
 
     private void eraseBlocks(ServerLevel level) {
+        Player owner = getOwnerPlayer();
+        boolean mayEraseProtected = owner instanceof ServerPlayer serverPlayer
+                && serverPlayer.hasPermissions(2);
         BlockPos base = blockPosition();
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         BlockState air = Blocks.AIR.defaultBlockState();
@@ -77,7 +94,8 @@ public class HollowPurpleEntity extends EffectEntity {
                     if (dx * dx + dy * dy + dz * dz > ERASE_RADIUS * ERASE_RADIUS) continue;
                     cursor.set(base.getX() + dx, base.getY() + dy, base.getZ() + dz);
                     BlockState state = level.getBlockState(cursor);
-                    if (!state.isAir()) {
+                    if (!state.isAir() && level.getBlockEntity(cursor) == null
+                            && (state.getDestroySpeed(level, cursor) >= 0 || mayEraseProtected)) {
                         level.setBlock(cursor, air, 2 | 16);
                     }
                 }

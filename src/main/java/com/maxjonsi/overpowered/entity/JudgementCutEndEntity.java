@@ -1,6 +1,7 @@
 package com.maxjonsi.overpowered.entity;
 
 import com.maxjonsi.overpowered.registry.ModSounds;
+import com.maxjonsi.overpowered.server.LegendaryCombat;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.damagesource.DamageSource;
@@ -14,7 +15,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class JudgementCutEndEntity extends EffectEntity {
-    private static final double RADIUS = 24;
+    private static final double RADIUS = 75;
 
     public JudgementCutEndEntity(EntityType<?> type, Level level) {
         super(type, level);
@@ -33,37 +34,29 @@ public class JudgementCutEndEntity extends EffectEntity {
             }
         }
 
-        if (tickCount >= 10 && tickCount <= 110) {
-            Player owner = getOwnerPlayer();
-            DamageSource source = owner != null
-                    ? level.damageSources().indirectMagic(owner, owner)
-                    : level.damageSources().magic();
-
-            if (tickCount % 5 == 0) {
-                for (LivingEntity target : victims(level)) {
-                    target.hurt(source, 10f);
-                }
-            }
+        if (tickCount >= 10 && tickCount <= 36) {
             if (tickCount % 8 == 0) {
                 level.playSound(null, getX(), getY(), getZ(), ModSounds.YAMATO_SLICE, SoundSource.PLAYERS,
                         2f, 0.8f + random.nextFloat() * 0.6f);
             }
         }
 
-        if (tickCount == 120) {
+        if (tickCount == 40) {
             Player owner = getOwnerPlayer();
             DamageSource source = owner != null
                     ? level.damageSources().indirectMagic(owner, owner)
                     : level.damageSources().magic();
             for (LivingEntity target : victims(level)) {
-                target.hurt(source, 10000f);
+                LegendaryCombat.damage(target, source, 10000f, 0.75f,
+                        LegendaryCombat.AttackKind.WORLD_LEVEL);
+                LegendaryCombat.stagger(target, 100, 4);
                 target.setDeltaMovement(target.getDeltaMovement().add(0, 0.8, 0));
                 target.hurtMarked = true;
             }
             level.playSound(null, getX(), getY(), getZ(), ModSounds.MAGIC_EXPLOSION, SoundSource.PLAYERS, 4f, 0.7f);
         }
 
-        if (tickCount >= 130) discard();
+        if (tickCount >= 60) discard();
     }
 
     private java.util.List<LivingEntity> victims(ServerLevel level) {
